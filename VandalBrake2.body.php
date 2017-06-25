@@ -80,7 +80,6 @@ class VandalBrake {
         $res_ip->free();
         # parole first to prevent duplicate rows
         VandalBrake::doParole(0,$ip,'',false);
-        wfLoadExtensionMessages( 'VandalBrake' );
         $a = array('vand_address' => $ip,
                    'vand_user' => 0,
                    'vand_by' => $vandaler->getId(),
@@ -210,7 +209,6 @@ class VandalBrake {
         $user = User::newFromId($userId);
         # parole to prevent duplicate rows
         VandalBrake::doParole(0,$ip,'',false);
-        wfLoadExtensionMessages( 'VandalBrake' );
         $reason_new = wfMessage( 'vandallogauto' )->params( $user->getName(), $reason )->text();
         $vandaler = User::newFromId($row['vand_by']);
         VandalBrake::doVandal($ip,0,$reason_new,!$accountallowed, false, false, false,$vandaler,true);
@@ -335,7 +333,6 @@ class VandalBrake {
       {
         # user is binned and brake is active
         $user->mBlockedby = $vandaler->getName();
-        wfLoadExtensionMessages( 'VandalBrake' );
         $user->mBlockreason = wfMessage('vandalbrakenoticeblock')->params($reason, round($dt / 60) )->escaped();
         $user->mBlock->mId = $vand_id;
       }
@@ -359,7 +356,6 @@ class VandalBrake {
       $dt = $wgVandalBrakeConfigLimit - $dt;
       if ($dt > 0)
       {        
-        wfLoadExtensionMessages( 'VandalBrake' );
         global $wgOut;
         $text = wfMessage( 'vandalbrakenotice' )->params( round($dt / 60), $vandaler->getName(), $reason, $vand_id )->parse();
         $wgOut->addHtml( $text );
@@ -378,7 +374,6 @@ class VandalBrake {
       if ($dt > 0)
       {
         global $wgOut;
-        wfLoadExtensionMessages( 'VandalBrake' );
         $text = wfMessage( 'editlimitnotice' )->params( $dt )->parse();
         $wgOut->addHtml( $text );
         $editor->showEditForm();
@@ -404,7 +399,6 @@ class VandalBrake {
       $dt = $wgVandalBrakeConfigLimit - $dt;
       if ($dt > 0)
       {
-        wfLoadExtensionMessages( 'VandalBrake' );
         global $wgOut;
         global $wgMessageCache;
         $messages = $wgMessageCache->getExtensionMessagesFor( 'en' );
@@ -425,7 +419,6 @@ class VandalBrake {
       if ($dt >= 0)
       {
         global $wgOut;
-        wfLoadExtensionMessages( 'VandalBrake' );
         $text = wfMessage( 'editlimitnotice')->params( $dt )->parse();
         $wgOut->addHtml( $text );
         $editor->showEditForm();
@@ -451,7 +444,6 @@ class VandalBrake {
       $dt = $wgVandalBrakeConfigLimit - $dt;
       if ($dt > 0)
       {
-        wfLoadExtensionMessages( 'VandalBrake' );
         $resultArr = array('error' => wfMessage( 'vandalbrakenoticeapi' )->params( round($dt / 60), $vandaler->getName(), $reason, $vand_id )->parse() );
         return false;
       }
@@ -466,7 +458,6 @@ class VandalBrake {
       $dt = ($anon ? $wgVandalBrakeConfigAnonLimit : $wgVandalBrakeConfigUserLimit) - $dt;
       if ($dt > 0)
       {
-        wfLoadExtensionMessages( 'VandalBrake' );
         $resultArr = array('error' => wfMessage( 'editlimitnotice' )->params( $dt )->parse() );
         return false;
       }
@@ -479,7 +470,6 @@ class VandalBrake {
     if (VandalBrake::checkVandal(wfGetIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
       if (!$accountallowed)
       {
-        wfLoadExtensionMessages( 'VandalBrake' );
         $message = wfMessage( 'vandalbrakenoticeaccountcreation')->params( $vandaler->getName(), $reason, $vand_id )->parse();
         return false;
       } else {
@@ -510,7 +500,6 @@ class VandalBrake {
   static function onContribs($id, $title, &$tools)
   {
     global $wgUser;
-    wfLoadExtensionMessages( 'VandalBrake' );
     if( $wgUser->isAllowed( 'block' ) ) {
       //insert at end
       $tools[] = $wgUser->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
@@ -936,7 +925,6 @@ class SpecialVandal extends SpecialPage {
     #SpecialPage::setGroup('VandalBrake','users');
     global $wgSpecialPageGroups;
     $wgSpecialPageGroups['VandalBrake']='users';
-    wfLoadExtensionMessages('VandalBrake');
   }
   function execute( $par ) {
     global $wgRequest, $wgOut, $wgUser;
@@ -973,7 +961,6 @@ class SpecialVandalbin extends SpecialPage {
     #SpecialPage::setGroup('VandalBrake','users');
     global $wgSpecialPageGroups;
     $wgSpecialPageGroups['VandalBin']='users';
-    wfLoadExtensionMessages('VandalBrake');
   }
   function searchForm() {
     global $wgScript, $wgTitle, $wgRequest;
