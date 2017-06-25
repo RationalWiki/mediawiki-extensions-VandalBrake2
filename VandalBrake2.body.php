@@ -10,7 +10,7 @@ class VandalBrake {
     if ($type == 'vandal' && $action = 'parole')
     {
       if( !$skin ) {
-        return wfMsgExt('vandallogparole', array( 'replaceafter' ), $title->getPrefixedText());
+        return wfMessage('vandallogparole')->rawParams($title->getPrefixedText())->escaped();
       }
 
       if( substr( $title->getText(), 0, 1 ) == '#' ) {
@@ -20,7 +20,7 @@ class VandalBrake {
         $titleLink = $skin->userLink( $id, $title->getText() )
         . $skin->userToolLinks( $id, $title->getText(), false, Linker::TOOL_LINKS_NOBLOCK );
       }
-      return wfMsgExt('vandallogparole', array( 'replaceafter' ), $titleLink);
+      return wfMessage('vandallogparole')->rawParams($titleLink)->escaped();
     }
   }
 
@@ -28,16 +28,14 @@ class VandalBrake {
                                    $params = array(), $filterWikilinks = false )
   {
     if( !$skin ) {
-      return wfMsgExt('vandallogvandal', array( 'replaceafter' ), $title->getPrefixedText(), $params[0]);
+      return wfMessage('vandallogvandal')->rawParams($title->getPrefixedText(), $params[0])->escaped();
     }
     if ($type == 'vandal' && $action = 'vandal')
     {
       $id = User::idFromName( $title->getText() );
       $titleLink = $skin->userLink( $id, $title->getText() )
       . $skin->userToolLinks( $id, $title->getText(), false, Linker::TOOL_LINKS_NOBLOCK );
-      //$parolelink = $skin->link( SpecialPage::getTitleFor( 'VandalBin' ),  wfMsgExt( 'parole', array( 'escape' ) ), 
-      //                           array(),array( 'action' => 'parole', 'wpVandAddress' => $title->getText() ), 'known' );
-      return wfMsgExt('vandallogvandal', array( 'replaceafter' ), $titleLink, $params[0]);
+      return wfMessage('vandallogvandal')->rawParams($titleLink, $params[0])->escaped();
     }
   }
 
@@ -45,7 +43,7 @@ class VandalBrake {
   {
     if ($log_type === 'vandal' && $log_action === 'vandal') {
       global $wgUser;
-      $revert = '('.$wgUser->getSkin()->link( SpecialPage::getTitleFor( 'VandalBin' ),  wfMsgExt( 'parolelink', array( 'escape' ) ), 
+      $revert = '('.$wgUser->getSkin()->link( SpecialPage::getTitleFor( 'VandalBin' ),  wfMessage( 'parolelink' )->escaped(), 
                                           array(),array( 'action' => 'parole', 'wpVandAddress' => $title->getText() ), 'known' ) . ')';
     }
     return true;
@@ -86,7 +84,7 @@ class VandalBrake {
         $a = array('vand_address' => $ip,
                    'vand_user' => 0,
                    'vand_by' => $vandaler->getId(),
-                   'vand_reason' => wfMsgReplaceArgs(wfMsg('vandallogauto'), array( $address , $reason ) ),
+                   'vand_reason' => wfMessage('vandallogauto')->params( $address, $reason )->text(),
                    'vand_timestamp' => wfTimestampNow(),
                    'vand_account' => $blockCreation,
                    'vand_autoblock' => false,
@@ -104,15 +102,15 @@ class VandalBrake {
       $flags = array();
       if ($anononly)
       {
-        $flags[] = wfMsg( 'block-log-flags-anononly' );
+        $flags[] = wfMessage( 'block-log-flags-anononly' )->text();
       }
       if ($blockCreation)
       {
-        $flags[] = wfMsg( 'block-log-flags-nocreate' );
+        $flags[] = wfMessage( 'block-log-flags-nocreate' )->text();
       }
       if (!$autoblock && $userId)
       {
-        $flags[] = wfMsg( 'block-log-flags-noautoblock' );
+        $flags[] = wfMessage( 'block-log-flags-noautoblock' )->text();
       }
       $params = array();
       $params[] = implode(', ',$flags);
@@ -213,7 +211,7 @@ class VandalBrake {
         # parole to prevent duplicate rows
         VandalBrake::doParole(0,$ip,'',false);
         wfLoadExtensionMessages( 'VandalBrake' );
-        $reason_new = wfMsgReplaceArgs( wfMsg('vandallogauto'), array( $user->getName() , $reason ) );
+        $reason_new = wfMessage( 'vandallogauto' )->params( $user->getName(), $reason )->text();
         $vandaler = User::newFromId($row['vand_by']);
         VandalBrake::doVandal($ip,0,$reason_new,!$accountallowed, false, false, false,$vandaler,true);
         return true;
@@ -338,7 +336,7 @@ class VandalBrake {
         # user is binned and brake is active
         $user->mBlockedby = $vandaler->getName();
         wfLoadExtensionMessages( 'VandalBrake' );
-        $user->mBlockreason = wfMsgExt('vandalbrakenoticeblock',array( 'escape' ), $reason, round($dt / 60) );
+        $user->mBlockreason = wfMessage('vandalbrakenoticeblock')->params($reason, round($dt / 60) )->escaped();
         $user->mBlock->mId = $vand_id;
       }
     }
@@ -363,7 +361,7 @@ class VandalBrake {
       {        
         wfLoadExtensionMessages( 'VandalBrake' );
         global $wgOut;
-        $text = wfMsgExt( 'vandalbrakenotice', array( 'parse' ), round($dt / 60), $vandaler->getName(), $reason, $vand_id );
+        $text = wfMessage( 'vandalbrakenotice' )->params( round($dt / 60), $vandaler->getName(), $reason, $vand_id )->parse();
         $wgOut->addHtml( $text );
         $editor->showEditForm();
         return false;
@@ -381,7 +379,7 @@ class VandalBrake {
       {
         global $wgOut;
         wfLoadExtensionMessages( 'VandalBrake' );
-        $text = wfMsgExt( 'editlimitnotice', array( 'parse' ), $dt );
+        $text = wfMessage( 'editlimitnotice' )->params( $dt )->parse();
         $wgOut->addHtml( $text );
         $editor->showEditForm();
         return false;      
@@ -410,7 +408,7 @@ class VandalBrake {
         global $wgOut;
         global $wgMessageCache;
         $messages = $wgMessageCache->getExtensionMessagesFor( 'en' );
-        $text = wfMsgExt( 'vandalbrakenotice', array( 'parse' ), round($dt / 60), $vandaler->getName(), $reason, $vand_id );
+        $text = wfMessage( 'vandalbrakenotice' )->params( round($dt / 60), $vandaler->getName(), $reason, $vand_id )->parse();
         $wgOut->addHtml( $text );
         $editor->showEditForm();
         return false;
@@ -428,7 +426,7 @@ class VandalBrake {
       {
         global $wgOut;
         wfLoadExtensionMessages( 'VandalBrake' );
-        $text = wfMsgExt( 'editlimitnotice', array( 'parse' ), $dt );
+        $text = wfMessage( 'editlimitnotice')->params( $dt )->parse();
         $wgOut->addHtml( $text );
         $editor->showEditForm();
         return false;      
@@ -454,7 +452,7 @@ class VandalBrake {
       if ($dt > 0)
       {
         wfLoadExtensionMessages( 'VandalBrake' );
-        $resultArr = array('error' => wfMsgExt( 'vandalbrakenoticeapi', array( 'replaceafter' ), round($dt / 60), $vandaler->getName(), $reason, $vand_id ));
+        $resultArr = array('error' => wfMessage( 'vandalbrakenoticeapi' )->params( round($dt / 60), $vandaler->getName(), $reason, $vand_id )->parse() );
         return false;
       }
     }
@@ -469,7 +467,7 @@ class VandalBrake {
       if ($dt > 0)
       {
         wfLoadExtensionMessages( 'VandalBrake' );
-        $resultArr = array('error' => wfMsgExt( 'editlimitnotice', array( 'parse' ), $dt ));
+        $resultArr = array('error' => wfMessage( 'editlimitnotice' )->params( $dt )->parse() );
         return false;
       }
     }
@@ -482,7 +480,7 @@ class VandalBrake {
       if (!$accountallowed)
       {
         wfLoadExtensionMessages( 'VandalBrake' );
-        $message = wfMsgExt( 'vandalbrakenoticeaccountcreation', array( 'parse' ), $vandaler->getName(), $reason, $vand_id );
+        $message = wfMessage( 'vandalbrakenoticeaccountcreation')->params( $vandaler->getName(), $reason, $vand_id )->parse();
         return false;
       } else {
         return true;
@@ -499,7 +497,7 @@ class VandalBrake {
     if( $wgUser->isAllowed( 'block' ) ) {
       if( !$changeslist->isDeleted($rc,Revision::DELETED_USER) ) {
         $link = $wgUser->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
-                                                      wfMsgHtml( 'vandalbin-contribs' ), 
+                                                      wfMessage( 'vandalbin-contribs' )->escaped(), 
                                                       'wpVandAddress=' . urlencode( $rc->getAttribute(rc_user_text) ) );
         $s .= $link;
         //$s .= implode(',',$rc->mAttribs) . ' keys: ' . implode(',',array_keys($rc->mAttribs));
@@ -516,17 +514,12 @@ class VandalBrake {
     if( $wgUser->isAllowed( 'block' ) ) {
       //insert at end
       $tools[] = $wgUser->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
-                                                       wfMsgHtml( 'vandalbin-contribs' ), 
+                                                       wfMessage( 'vandalbin-contribs' )->escaped(), 
                                                        'wpVandAddress=' . urlencode( $title->getText() ) );
-      //insert into arbitrary position
-      //$link = $wgUser->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
-      //                                              wfMsgHtml( 'vandalbin-contribs' ), 
-      //                                              'wpVandAddress=' . urlencode( $title->getText() ) );
-      //array_splice($tools,2,0,array($link));
     }
     //insert vandal log
     $tools[] = $wgUser->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'Log' ), 
-                                                     wfMsgHtml( 'vandallog-contribs' ), 
+                                                     wfMessage( 'vandallog-contribs' )->escaped(), 
                                                      'type=vandal&page=' . urlencode( $title->getPrefixedUrl() ) );
     return true;
   
@@ -553,30 +546,30 @@ class VandalForm {
   function showForm( $err )
   {
     global $wgOut, $wgUser;
-    $wgOut->setPagetitle( wfMsg('vandalbrake') );
+    $wgOut->setPagetitle( wfMessage('vandalbrake')->escaped() );
     $wgOut->addWikiMsg( 'vandalbraketext' );
-    $mIpaddress = Xml::label( wfMsg( 'ipadressorusername' ), 'mw-bi-target');
-    $mReason = Xml::label( wfMsg( 'ipbreason' ), 'wpVandReasonList' );
-    $mReasonother = Xml::label( wfMsg('ipbotherreason'), 'vand-reason' );
+    $mIpaddress = Xml::label( wfMessage( 'ipadressorusername' )->text(), 'mw-bi-target');
+    $mReason = Xml::label( wfMessage( 'ipbreason' )->text(), 'wpVandReasonList' );
+    $mReasonother = Xml::label( wfMessage('ipbotherreason')->text(), 'vand-reason' );
     $user = User::newFromName( $this->VandAddress );
     
     if ( $err ) {
       $key = array_shift($err);
-      $msg = wfMsgReal($key,$err);
-      $wgOut->setSubtitle( wfMsgHtml('formerror') );
+      $msg = wfMessage($key)->params($err)->text();
+      $wgOut->setSubtitle( wfMessage('formerror')->escaped() );
       $wgOut->addHTML( Xml::tags('p', array('class' => 'error'), $msg ) );
     }
     
     $reasonDropDown = Xml::listDropDown( 'wpVandReasonList', 
-      wfMsgForContent( 'ipbreason-dropdown' ),
-      wfMsgForContent( 'ipbreasonotherlist' ), $this->VandReasonList, 'wpVandDropDown', 4 );
+      wfMessage( 'ipbreason-dropdown' )->inContentLanguage()->text(),
+      wfMessage( 'ipbreasonotherlist' )->inContentLanguage()->text(), $this->VandReasonList, 'wpVandDropDown', 4 );
     $titleObject = SpecialPage::getTitleFor( 'VandalBrake' );
     global $wgStylePath, $wgStyleVersion;
     $wgOut->addHTML(
       Xml::tags( 'script', array( 'type' => 'text/javascript', 'src' => "$wgStylePath/common/block.js?$wgStyleVersion" ), '' ) .
       Xml::openElement('form', array( 'method' => 'post', 'action' => $titleObject->getLocalURL("action=submit"), 'id' => 'vand' ) ) .
       Xml::openElement( 'fieldset' ) .
-      Xml::element( 'legend', null, wfMsg( 'vandalbrake' ) ) .
+      Xml::element( 'legend', null, wfMessage( 'vandalbrake' )->text() ) .
       Xml::openElement( 'table', array( 'border' => '0', 'id' => 'mw-vandal-table') ) .
       "<tr>
         <td class='mw-label'>
@@ -618,26 +611,26 @@ class VandalForm {
       "<tr id='wpAnonOnlyRow'>
         <td>&nbsp;</td>
         <td class='mw-input'>".
-          Xml::checkLabel(wfMsg('ipbanononly'), 'anononly', 'anononly', $this->VandAnonOnly, array( 'tabindex' => '3' ) ) ."
+          Xml::checkLabel(wfMessage('ipbanononly')->text(), 'anononly', 'anononly', $this->VandAnonOnly, array( 'tabindex' => '3' ) ) ."
         </td>
       </tr>" .
       "<tr id='wpCreateAccountRow'>
         <td>&nbsp;</td>
         <td class='mw-input'>".
-          Xml::checkLabel(wfMsg('ipbcreateaccount'), 'preventaccount', 'preventaccount', $this->VandAccount, array( 'tabindex' => '4' ) ) ."
+          Xml::checkLabel(wfMessage('ipbcreateaccount')->text(), 'preventaccount', 'preventaccount', $this->VandAccount, array( 'tabindex' => '4' ) ) ."
         </td>
       </tr>" .
       "<tr id='wpEnableAutoblockRow'>
         <td>&nbsp;</td>
         <td class='mw-input'>".
-          Xml::checkLabel(wfMsg('ipbenableautoblock'), 'autoblock', 'autoblock', $this->VandAutoblock, array( 'tabindex' => '5' ) ) ."
+          Xml::checkLabel(wfMessage('ipbenableautoblock')->text(), 'autoblock', 'autoblock', $this->VandAutoblock, array( 'tabindex' => '5' ) ) ."
         </td>
       </tr>"
     );
     $wgOut->addHTML("
       <tr>
         <td style='padding-top: 1em;'>" .
-          Xml::submitButton( wfMsg( 'vandal' ),
+          Xml::submitButton( wfMessage( 'vandal' )->text(),
                              array('name' => 'wpVandal',
                                    'tabindex' => '6',
                                    'accesskey' => 's') ) . "
@@ -672,13 +665,6 @@ class VandalForm {
 				),
 				'showIfEmpty' => false
 			));
-    /*if($count > 10)
-    {
-      $out->addHTML( $wgUser->getSkin()->link( SpecialPage::getTitleFor( 'Log' ), 
-                                               wfMsgHtml( 'vandallog-fulllog' ), array(), 
-                                               array('type' => 'vandal',
-                                                     'page' => $title->getPrefixedText() ) ) );
-    }*/
   }
 
   
@@ -690,23 +676,23 @@ class VandalForm {
     }
     $links[] = $this->getUnblockLink( $skin );
     $links[] = $this->getVandListLink( $skin );
-    $links[] = $skin->userLink ( 'MediaWiki:Ipbreason-dropdown', wfMsgHtml( 'ipb-edit-dropdown' ) );
+    $links[] = $skin->userLink ( 'MediaWiki:Ipbreason-dropdown', wfMessage( 'ipb-edit-dropdown' )->escaped() );
     return '<p class="mw-ipb-conveniencelinks">' . implode( ' | ', $links ) . '</p>';
   }
 
   private function getContribsLink( $skin ) {
     $contribsPage = SpecialPage::getTitleFor( 'Contributions', $this->VandAddress );
-    return $skin->link( $contribsPage, wfMsgExt( 'ipb-blocklist-contribs', 'escape', $this->VandAddress ) );
+    return $skin->link( $contribsPage, wfMessage( 'ipb-blocklist-contribs' )->params( $this->VandAddress )->escaped() );
   }
 
   private function getUnblockLink( $skin ) {
     $list = SpecialPage::getTitleFor( 'VandalBin' );
     if( $this->VandAddress ) {
       $addr = htmlspecialchars( strtr( $this->VandAddress, '_', ' ' ) );
-      return $skin->makeKnownLinkObj( $list, wfMsgHtml( 'parole-addr', $addr ),
+      return $skin->makeKnownLinkObj( $list, wfMessage( 'parole-addr' )->rawParams( $addr )->escaped(),
                                       'action=parole&wpVandAddress=' . urlencode( $this->VandAddress ) );
     } else {
-      return $skin->makeKnownLinkObj( $list, wfMsgHtml( 'parole-any' ), 'action=parole' );
+      return $skin->makeKnownLinkObj( $list, wfMessage( 'parole-any' )->escaped(), 'action=parole' );
     }
   }
 
@@ -714,10 +700,10 @@ class VandalForm {
     $list = SpecialPage::getTitleFor( 'VandalBin' );
     if( $this->VandAddress ) {
       $addr = htmlspecialchars( strtr( $this->VandAddress, '_', ' ' ) );
-      return $skin->makeKnownLinkObj( $list, wfMsgHtml( 'vandalbin-addr', $addr ),
+      return $skin->makeKnownLinkObj( $list, wfMessage( 'vandalbin-addr' )->rawParams( $addr )->escaped(),
                                       'wpVandAddress=' . urlencode( $this->VandAddress ) );
     } else {
-      return $skin->makeKnownLinkObj( $list, wfMsgHtml( 'vandalbin-any' ) );
+      return $skin->makeKnownLinkObj( $list, wfMessage( 'vandalbin-any' )->escaped() );
     }
   }
   
@@ -783,9 +769,9 @@ class VandalForm {
   
   function showSuccess() {
     global $wgOut;
-    $wgOut->setPagetitle( wfMsg( 'vandalbrake' ) );
-    $wgOut->setSubtitle( wfMsg( 'vandalsuccessub' ) );
-    $text = wfMsgExt( 'vandalsuccesstext', array( 'parse' ), $this->VandAddress );
+    $wgOut->setPagetitle( wfMessage( 'vandalbrake' )->escaped() );
+    $wgOut->setSubtitle( wfMessage( 'vandalsuccessub' )->escaped() );
+    $text = wfMessage( 'vandalsuccesstext' )->params( $this->VandAddress )->parse();
     $wgOut->addHTML( $text );
   }  
 }
@@ -804,15 +790,15 @@ class ParoleForm {
   function showForm( $err )
   {
     global $wgOut, $wgUser;
-    $wgOut->setPagetitle( wfMsg('paroletitle') );
+    $wgOut->setPagetitle( wfMessage('paroletitle')->escaped() );
     $wgOut->addWikiMsg( 'paroletext' );
-    $mIpaddress = Xml::label( wfMsg( 'ipadressorusername' ), 'mw-bi-target');
-    $mReason = Xml::label( wfMsg( 'ipbreason' ), 'vand-reason' );
+    $mIpaddress = Xml::label( wfMessage( 'ipadressorusername' )->text(), 'mw-bi-target');
+    $mReason = Xml::label( wfMessage( 'ipbreason' )->text(), 'vand-reason' );
     
     if ( $err ) {
       $key = array_shift($err);
-      $msg = wfMsgReal($key,$err);
-      $wgOut->setSubtitle( wfMsgHtml('formerror') );
+      $msg = wfMessage($key)->params($err)->text();
+      $wgOut->setSubtitle( wfMessage('formerror')->escaped() );
       $wgOut->addHTML( Xml::tags('p', array('class' => 'error'), $msg ) );
     }
     
@@ -821,7 +807,7 @@ class ParoleForm {
     $wgOut->addHTML(
       Xml::openElement('form', array( 'method' => 'post', 'action' => $titleObject->getLocalURL("action=submit"), 'id' => 'parole' ) ) .
       Xml::openElement( 'fieldset' ) .
-      Xml::element( 'legend', null, wfMsg( 'parolelegend' ) ) .
+      Xml::element( 'legend', null, wfMessage( 'parolelegend' )->text() ) .
       Xml::openElement( 'table', array( 'border' => '0', 'id' => 'mw-parole-table') ) .
       "<tr>
         <td class='mw-label'>
@@ -863,7 +849,7 @@ class ParoleForm {
     $wgOut->addHTML("
       <tr>
         <td style='padding-top: 1em;'>" .
-          Xml::submitButton( wfMsg( 'parole' ),
+          Xml::submitButton( wfMessage( 'parole' )->text(),
                              array('name' => 'wpParole',
                                    'tabindex' => '6',
                                    'accesskey' => 's') ) . "
@@ -934,10 +920,10 @@ class ParoleForm {
   
   function showSuccess() {
     global $wgOut;
-    $wgOut->setPagetitle( wfMsg( 'VandalBin' ) );
-    $wgOut->setSubtitle( wfMsg( 'parolesuccessub' ) );
-    $text = $this->VanAddress ? (wfMsgExt( 'parolesuccesstext', array( 'parse' ), $this->VandAddress )) 
-                   : wfMsg('parolesuccesstextanon');
+    $wgOut->setPagetitle( wfMessage( 'VandalBin' )->escaped() );
+    $wgOut->setSubtitle( wfMessage( 'parolesuccessub' )->escaped() );
+    $text = $this->VanAddress ? (wfMessage( 'parolesuccesstext' )->params( $this->VandAddress )->parse() ) 
+                   : wfMessage('parolesuccesstextanon')->escaped();
     $wgOut->addHTML( $text );
   }  
 }
@@ -995,10 +981,10 @@ class SpecialVandalbin extends SpecialPage {
       Xml::tags( 'form', array( 'action' => $wgScript ),
         html::hidden( 'title', $wgTitle->getPrefixedDbKey() ) .
         Xml::openElement( 'fieldset' ) .
-        Xml::element( 'legend', null, wfMsg( 'vandalbin-legend' ) ) .
-        Xml::inputLabel( wfMsg( 'ipadressorusername' ), 'wpVandAddress', 'wpVandAddress', /* size */ false, $this->VandAddress ) .
+        Xml::element( 'legend', null, wfMessage( 'vandalbin-legend' )->text() ) .
+        Xml::inputLabel( wfMessage( 'ipadressorusername' )->text(), 'wpVandAddress', 'wpVandAddress', /* size */ false, $this->VandAddress ) .
         '&nbsp;' .
-        Xml::submitButton( wfMsg( 'ipblocklist-submit' ) ) . '<br />' .
+        Xml::submitButton( wfMessage( 'ipblocklist-submit' )->text() ) . '<br />' .
         Xml::closeElement( 'fieldset' )
       );
   }
@@ -1138,24 +1124,22 @@ class VandalbinPager extends ReverseChronologicalPager {
       $target = $sk->userLink($row->vand_user, /*$row->vand_address*/ $name ) . $sk->userToolLinks($row->vand_user, /*$row->vand_address*/ $name, false, Linker::TOOL_LINKS_NOBLOCK);
     }
     $formattedTime = $wgLang->timeanddate( $row->vand_timestamp, true );
-    $line = wfMsgReplaceArgs( wfMsg('vandalbinmsg'), array( $formattedTime, $vandaler, $target ) );
+    $line = wfMessage( 'vandalbinmsg' )->rawParams( $formattedTime, $vandaler, $target )->escaped();
 
-    $parolelink = $sk->link( SpecialPage::getTitleFor( 'vandalbin' ), wfMsg('parolelink'),array(),$action , 'known');
-    
-    
+    $parolelink = $sk->link( SpecialPage::getTitleFor( 'vandalbin' ), wfMessage('parolelink')->escaped(),array(),$action , 'known');
     
     $flags = array();
     if ($row->vand_anon_only)
     {
-      $flags[] = wfMsg( 'block-log-flags-anononly' );
+      $flags[] = wfMessage( 'block-log-flags-anononly' )->text();
     }
     if ($row->vand_account)
     {
-      $flags[] = wfMsg( 'block-log-flags-nocreate' );
+      $flags[] = wfMessage( 'block-log-flags-nocreate' )->text();
     }
     if (!$row->vand_autoblock && $row->vand_user)
     {
-      $flags[] = wfMsg( 'block-log-flags-noautoblock' );
+      $flags[] = wfMessage( 'block-log-flags-noautoblock' )->text();
     }
     $flagsstr = implode(', ',$flags);
     $comment = $sk->commentBlock($reason);

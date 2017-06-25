@@ -82,19 +82,6 @@ $wgAutoloadClasses['VandalBrake'] =  "$wgVandalBrakeIP/VandalBrake2.body.php";
 $wgAutoloadClasses['SpecialVandal'] =  "$wgVandalBrakeIP/VandalBrake2.body.php";
 $wgAutoloadClasses['SpecialVandalbin'] =  "$wgVandalBrakeIP/VandalBrake2.body.php";
 
-//Avoid unstubbing $wgParser on setHook() too early on modern (1.12+) MW versions, as per r35980
-if ( defined( 'MW_SUPPORTS_PARSERFIRSTCALLINIT' ) ) {
-	$wgHooks['ParserFirstCallInit'][] = 'vandalbrakeinit';
-} else { // Otherwise do things the old fashioned way
-	$wgExtensionFunctions[] = 'vandalbrakeinit';
-}
-
-function vandalbrakeinit()
-{
-  wfLoadExtensionMessages( 'VandalBrake' );
-  return true;
-}
-
 function setupVandalBrake()
 {
   ## Check if the table exists
