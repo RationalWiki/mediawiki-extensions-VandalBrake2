@@ -42,8 +42,7 @@ class VandalBrake {
   static function ModifyLog($log_type, $log_action, $title, $paramArray, &$comment, &$revert, $time)
   {
     if ($log_type === 'vandal' && $log_action === 'vandal') {
-      global $wgUser;
-      $revert = '('.$wgUser->getSkin()->link( SpecialPage::getTitleFor( 'VandalBin' ),  wfMessage( 'parolelink' )->escaped(), 
+      $revert = '('.RequestContext::getMain()->getSkin()->link( SpecialPage::getTitleFor( 'VandalBin' ),  wfMessage( 'parolelink' )->escaped(), 
                                           array(),array( 'action' => 'parole', 'wpVandAddress' => $title->getText() ), 'known' ) . ')';
     }
     return true;
@@ -486,7 +485,7 @@ class VandalBrake {
     global $wgUser;
     if( $wgUser->isAllowed( 'block' ) ) {
       if( !$changeslist->isDeleted($rc,Revision::DELETED_USER) ) {
-        $link = $wgUser->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
+        $link = RequestContext::getMain()->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
                                                       wfMessage( 'vandalbin-contribs' )->escaped(), 
                                                       'wpVandAddress=' . urlencode( $rc->getAttribute(rc_user_text) ) );
         $s .= $link;
@@ -502,12 +501,12 @@ class VandalBrake {
     global $wgUser;
     if( $wgUser->isAllowed( 'block' ) ) {
       //insert at end
-      $tools[] = $wgUser->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
+      $tools[] = RequestContext::getMain()->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
                                                        wfMessage( 'vandalbin-contribs' )->escaped(), 
                                                        'wpVandAddress=' . urlencode( $title->getText() ) );
     }
     //insert vandal log
-    $tools[] = $wgUser->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'Log' ), 
+    $tools[] = RequestContext::getMain()->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'Log' ), 
                                                      wfMessage( 'vandallog-contribs' )->escaped(), 
                                                      'type=vandal&page=' . urlencode( $title->getPrefixedUrl() ) );
     return true;
@@ -644,7 +643,6 @@ class VandalForm {
   }
 
   function showLogFragment( $out, $title ) {
-    global $wgUser;
     $out->addHTML( Xml::element( 'h2', NULL, LogPage::logName( 'vandal' ) ) );
     $count = LogEventsList::showLogExtract( $out, 'vandal', $title->getPrefixedText(), '', array(
 				'lim' => 10,
@@ -658,8 +656,7 @@ class VandalForm {
 
   
   private function getConvenienceLinks() {
-    global $wgUser;
-    $skin = $wgUser->getSkin();
+    $skin = RequestContext::getMain()->getSkin();
     if( $this->VandAddress ) {
       $links[] = $this->getContribsLink( $skin );
     }
@@ -698,7 +695,6 @@ class VandalForm {
   
   function doVandal()
   {
-    global $wgUser;
     $userId = 0;
     $this->VandAddress = IP::sanitizeIP($this->VandAddress);
     
@@ -1084,11 +1080,11 @@ class VandalbinPager extends ReverseChronologicalPager {
 	}
 
   function formatRow( $row ) {
-    global $wgUser, $wgLang;
+    global $wgLang;
     static $sk=null;
     if( is_null( $sk ) )
     {
-      $sk = $wgUser->getSkin();
+      $sk = RequestContext::getMain()->getSkin();
     }
     $vand_by_id = $row->vand_by;
     $vand_by_user = User::newFromId($vand_by_id);
