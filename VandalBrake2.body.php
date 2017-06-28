@@ -286,7 +286,7 @@ class VandalBrake {
   }
   
   static function userGetRights($user, &$aRights) {
-    # we cannot be sure that wfGetIP belongs to $user, so we skip the ip checking
+    # we cannot be sure that the current IP belongs to $user, so we skip the ip checking
     if (VandalBrake::checkVandal(0, $user->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
       $t = VandalBrake::getLastEdit($user);
       global $wgVandalBrakeConfigLimit, $wgVandalBrakeConfigRemoveRights, $wgVandalBrakeConfigLimitRights ;
@@ -303,7 +303,7 @@ class VandalBrake {
   }
   
   static function userGetGroups(&$user, &$aUserGroups) {
-    # we cannot be sure that wfGetIP belongs to $user, so we skip the ip checking
+    # we cannot be sure that the current IP belongs to $user, so we skip the ip checking
     if (VandalBrake::checkVandal(0, $user->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
       $t = VandalBrake::getLastEdit($user);
       global $wgVandalBrakeConfigLimit;
@@ -320,7 +320,7 @@ class VandalBrake {
   }
   
   static function getBlockedStatus($user) {
-    # we cannot be sure that wfGetIP belongs to $user, so we skip the ip checking
+    # we cannot be sure that the current IP belongs to $user, so we skip the ip checking
     $userip = $user->isAnon() ? $user->getName() : 0;
     $userid = $user->getId();
     if (VandalBrake::checkVandal($userip, $userid, $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
@@ -342,7 +342,7 @@ class VandalBrake {
   static function onEditFilterMerged($editor, $text, &$error, $summary) {
     global $wgUser;
     $t = false;
-    if (VandalBrake::checkVandal(wfGetIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
+    if (VandalBrake::checkVandal(RequestContext::getMain()->getRequest()->getIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
       $t = VandalBrake::getLastEdit($wgUser);
       # Check the user's IP too, for logged out edits or edits from another account
       # but only if the user is autoblocked or if the block is on the IP, not the user
@@ -385,7 +385,7 @@ class VandalBrake {
   static function onEditFilter($editor, $text, &$error) {
     global $wgUser;
     $t = false;
-    if (VandalBrake::checkVandal(wfGetIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
+    if (VandalBrake::checkVandal(RequestContext::getMain()->getRequest()->getIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
       $t = VandalBrake::getLastEdit($wgUser);
       # Check the user's IP too, for logged out edits or edits from another account
       # but only if the user is autoblocked or if the block is on the IP, not the user
@@ -430,7 +430,7 @@ class VandalBrake {
   static function onAPIEditBeforeSave($EditPage, $text, &$resultArr) {
     global $wgUser;
     $t = false;
-    if (VandalBrake::checkVandal(wfGetIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
+    if (VandalBrake::checkVandal(RequestContext::getMain()->getRequest()->getIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
       $t = VandalBrake::getLastEdit($wgUser);
       # Check the user's IP too, for logged out edits or edits from another account
       # but only if the user is autoblocked or if the block is on the IP, not the user
@@ -466,7 +466,7 @@ class VandalBrake {
   
   static function onAccountCreation($user, $message) {
     global $wgUser;
-    if (VandalBrake::checkVandal(wfGetIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
+    if (VandalBrake::checkVandal(RequestContext::getMain()->getRequest()->getIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
       if (!$accountallowed)
       {
         $message = wfMessage( 'vandalbrakenoticeaccountcreation')->params( $vandaler->getName(), $reason, $vand_id )->parse();
