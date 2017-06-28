@@ -485,9 +485,9 @@ class VandalBrake {
     global $wgUser;
     if( $wgUser->isAllowed( 'block' ) ) {
       if( !$changeslist->isDeleted($rc,Revision::DELETED_USER) ) {
-        $link = Linker::makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
-                                                      wfMessage( 'vandalbin-contribs' )->escaped(), 
-                                                      'wpVandAddress=' . urlencode( $rc->getAttribute(rc_user_text) ) );
+        $link = Linker::link( SpecialPage::getTitleFor( 'VandalBrake' ), 
+                                                      wfMessage( 'vandalbin-contribs' )->escaped(), array(),
+                                                      array( 'wpVandAddress' => $rc->getAttribute(rc_user_text) ) );
         $s .= $link;
         //$s .= implode(',',$rc->mAttribs) . ' keys: ' . implode(',',array_keys($rc->mAttribs));
       }
@@ -501,14 +501,16 @@ class VandalBrake {
     global $wgUser;
     if( $wgUser->isAllowed( 'block' ) ) {
       //insert at end
-      $tools[] = Linker::makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
-                                                       wfMessage( 'vandalbin-contribs' )->escaped(), 
-                                                       'wpVandAddress=' . urlencode( $title->getText() ) );
+      $tools[] = Linker::link( SpecialPage::getTitleFor( 'VandalBrake' ), 
+                                                       wfMessage( 'vandalbin-contribs' )->escaped(),
+													   array(),
+                                                       array( 'wpVandAddress' => $title->getText() ) );
     }
     //insert vandal log
-    $tools[] = Linker::makeKnownLinkObj( SpecialPage::getTitleFor( 'Log' ), 
-                                                     wfMessage( 'vandallog-contribs' )->escaped(), 
-                                                     'type=vandal&page=' . urlencode( $title->getPrefixedUrl() ) );
+    $tools[] = Linker::link( SpecialPage::getTitleFor( 'Log' ), 
+                                                     wfMessage( 'vandallog-contribs' )->escaped(),
+													 array(),
+                                                     array( 'type' => 'vandal', 'page' => $title->getPrefixedUrl() ) );
     return true;
   
   }
@@ -675,10 +677,10 @@ class VandalForm {
     $list = SpecialPage::getTitleFor( 'VandalBin' );
     if( $this->VandAddress ) {
       $addr = htmlspecialchars( strtr( $this->VandAddress, '_', ' ' ) );
-      return Linker::makeKnownLinkObj( $list, wfMessage( 'parole-addr' )->rawParams( $addr )->escaped(),
-                                      'action=parole&wpVandAddress=' . urlencode( $this->VandAddress ) );
+      return Linker::link( $list, wfMessage( 'parole-addr' )->rawParams( $addr )->escaped(),
+	                                  array(), array( 'action' => 'parole', 'wpVandAddress' => $this->VandAddress ) );
     } else {
-      return Linker::makeKnownLinkObj( $list, wfMessage( 'parole-any' )->escaped(), 'action=parole' );
+      return Linker::link( $list, wfMessage( 'parole-any' )->escaped(), array(), array( 'action' => 'parole' ) );
     }
   }
 
@@ -686,10 +688,10 @@ class VandalForm {
     $list = SpecialPage::getTitleFor( 'VandalBin' );
     if( $this->VandAddress ) {
       $addr = htmlspecialchars( strtr( $this->VandAddress, '_', ' ' ) );
-      return Linker::makeKnownLinkObj( $list, wfMessage( 'vandalbin-addr' )->rawParams( $addr )->escaped(),
-                                      'wpVandAddress=' . urlencode( $this->VandAddress ) );
+      return Linker::link( $list, wfMessage( 'vandalbin-addr' )->rawParams( $addr )->escaped(),
+                                      array(), array( 'wpVandAddress' => $this->VandAddress ) );
     } else {
-      return Linker::makeKnownLinkObj( $list, wfMessage( 'vandalbin-any' )->escaped() );
+      return Linker::link( $list, wfMessage( 'vandalbin-any' )->escaped() );
     }
   }
   
