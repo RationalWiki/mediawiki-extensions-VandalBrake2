@@ -17,8 +17,8 @@ class VandalBrake {
         $titleLink = $title->getText();
       } else {
         $id = User::idFromName( $title->getText() );
-        $titleLink = $skin->userLink( $id, $title->getText() )
-        . $skin->userToolLinks( $id, $title->getText(), false, Linker::TOOL_LINKS_NOBLOCK );
+        $titleLink = Linker::userLink( $id, $title->getText() )
+        . Linker::userToolLinks( $id, $title->getText(), false, Linker::TOOL_LINKS_NOBLOCK );
       }
       return wfMessage('vandallogparole')->rawParams($titleLink)->escaped();
     }
@@ -33,8 +33,8 @@ class VandalBrake {
     if ($type == 'vandal' && $action = 'vandal')
     {
       $id = User::idFromName( $title->getText() );
-      $titleLink = $skin->userLink( $id, $title->getText() )
-      . $skin->userToolLinks( $id, $title->getText(), false, Linker::TOOL_LINKS_NOBLOCK );
+      $titleLink = Linker::userLink( $id, $title->getText() )
+      . Linker::userToolLinks( $id, $title->getText(), false, Linker::TOOL_LINKS_NOBLOCK );
       return wfMessage('vandallogvandal')->rawParams($titleLink, $params[0])->escaped();
     }
   }
@@ -42,7 +42,7 @@ class VandalBrake {
   static function ModifyLog($log_type, $log_action, $title, $paramArray, &$comment, &$revert, $time)
   {
     if ($log_type === 'vandal' && $log_action === 'vandal') {
-      $revert = '('.RequestContext::getMain()->getSkin()->link( SpecialPage::getTitleFor( 'VandalBin' ),  wfMessage( 'parolelink' )->escaped(), 
+      $revert = '('.Linker::link( SpecialPage::getTitleFor( 'VandalBin' ),  wfMessage( 'parolelink' )->escaped(), 
                                           array(),array( 'action' => 'parole', 'wpVandAddress' => $title->getText() ), 'known' ) . ')';
     }
     return true;
@@ -485,7 +485,7 @@ class VandalBrake {
     global $wgUser;
     if( $wgUser->isAllowed( 'block' ) ) {
       if( !$changeslist->isDeleted($rc,Revision::DELETED_USER) ) {
-        $link = RequestContext::getMain()->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
+        $link = Linker::makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
                                                       wfMessage( 'vandalbin-contribs' )->escaped(), 
                                                       'wpVandAddress=' . urlencode( $rc->getAttribute(rc_user_text) ) );
         $s .= $link;
@@ -501,12 +501,12 @@ class VandalBrake {
     global $wgUser;
     if( $wgUser->isAllowed( 'block' ) ) {
       //insert at end
-      $tools[] = RequestContext::getMain()->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
+      $tools[] = Linker::makeKnownLinkObj( SpecialPage::getTitleFor( 'VandalBrake' ), 
                                                        wfMessage( 'vandalbin-contribs' )->escaped(), 
                                                        'wpVandAddress=' . urlencode( $title->getText() ) );
     }
     //insert vandal log
-    $tools[] = RequestContext::getMain()->getSkin()->makeKnownLinkObj( SpecialPage::getTitleFor( 'Log' ), 
+    $tools[] = Linker::makeKnownLinkObj( SpecialPage::getTitleFor( 'Log' ), 
                                                      wfMessage( 'vandallog-contribs' )->escaped(), 
                                                      'type=vandal&page=' . urlencode( $title->getPrefixedUrl() ) );
     return true;
@@ -662,23 +662,23 @@ class VandalForm {
     }
     $links[] = $this->getUnblockLink( $skin );
     $links[] = $this->getVandListLink( $skin );
-    $links[] = $skin->userLink ( 'MediaWiki:Ipbreason-dropdown', wfMessage( 'ipb-edit-dropdown' )->escaped() );
+    $links[] = Linker::userLink ( 'MediaWiki:Ipbreason-dropdown', wfMessage( 'ipb-edit-dropdown' )->escaped() );
     return '<p class="mw-ipb-conveniencelinks">' . implode( ' | ', $links ) . '</p>';
   }
 
   private function getContribsLink( $skin ) {
     $contribsPage = SpecialPage::getTitleFor( 'Contributions', $this->VandAddress );
-    return $skin->link( $contribsPage, wfMessage( 'ipb-blocklist-contribs' )->params( $this->VandAddress )->escaped() );
+    return Linker::link( $contribsPage, wfMessage( 'ipb-blocklist-contribs' )->params( $this->VandAddress )->escaped() );
   }
 
   private function getUnblockLink( $skin ) {
     $list = SpecialPage::getTitleFor( 'VandalBin' );
     if( $this->VandAddress ) {
       $addr = htmlspecialchars( strtr( $this->VandAddress, '_', ' ' ) );
-      return $skin->makeKnownLinkObj( $list, wfMessage( 'parole-addr' )->rawParams( $addr )->escaped(),
+      return Linker::makeKnownLinkObj( $list, wfMessage( 'parole-addr' )->rawParams( $addr )->escaped(),
                                       'action=parole&wpVandAddress=' . urlencode( $this->VandAddress ) );
     } else {
-      return $skin->makeKnownLinkObj( $list, wfMessage( 'parole-any' )->escaped(), 'action=parole' );
+      return Linker::makeKnownLinkObj( $list, wfMessage( 'parole-any' )->escaped(), 'action=parole' );
     }
   }
 
@@ -686,10 +686,10 @@ class VandalForm {
     $list = SpecialPage::getTitleFor( 'VandalBin' );
     if( $this->VandAddress ) {
       $addr = htmlspecialchars( strtr( $this->VandAddress, '_', ' ' ) );
-      return $skin->makeKnownLinkObj( $list, wfMessage( 'vandalbin-addr' )->rawParams( $addr )->escaped(),
+      return Linker::makeKnownLinkObj( $list, wfMessage( 'vandalbin-addr' )->rawParams( $addr )->escaped(),
                                       'wpVandAddress=' . urlencode( $this->VandAddress ) );
     } else {
-      return $skin->makeKnownLinkObj( $list, wfMessage( 'vandalbin-any' )->escaped() );
+      return Linker::makeKnownLinkObj( $list, wfMessage( 'vandalbin-any' )->escaped() );
     }
   }
   
@@ -1081,15 +1081,10 @@ class VandalbinPager extends ReverseChronologicalPager {
 
   function formatRow( $row ) {
     global $wgLang;
-    static $sk=null;
-    if( is_null( $sk ) )
-    {
-      $sk = RequestContext::getMain()->getSkin();
-    }
     $vand_by_id = $row->vand_by;
     $vand_by_user = User::newFromId($vand_by_id);
     $vand_by_name = $vand_by_user->getName();
-    $vandaler = $sk->userLink($vand_by_id,$vand_by_name) . $sk->userToolLinks($vand_by_id,$vand_by_name);
+    $vandaler = Linker::userLink($vand_by_id,$vand_by_name) . Linker::userToolLinks($vand_by_id,$vand_by_name);
     $reason = ($row->vand_reason) ? "$row->vand_reason" : '' ;
     $action = array('action' => 'parole');
     if ($row->vand_auto)
@@ -1104,12 +1099,12 @@ class VandalbinPager extends ReverseChronologicalPager {
     		$name = $row->vand_address;
     	}
       $action['wpVandAddress'] = $name;//$row->vand_address;
-      $target = $sk->userLink($row->vand_user, /*$row->vand_address*/ $name ) . $sk->userToolLinks($row->vand_user, /*$row->vand_address*/ $name, false, Linker::TOOL_LINKS_NOBLOCK);
+      $target = Linker::userLink($row->vand_user, /*$row->vand_address*/ $name ) . Linker::userToolLinks($row->vand_user, /*$row->vand_address*/ $name, false, Linker::TOOL_LINKS_NOBLOCK);
     }
     $formattedTime = $wgLang->timeanddate( $row->vand_timestamp, true );
     $line = wfMessage( 'vandalbinmsg' )->rawParams( $formattedTime, $vandaler, $target )->escaped();
 
-    $parolelink = $sk->link( SpecialPage::getTitleFor( 'vandalbin' ), wfMessage('parolelink')->escaped(),array(),$action , 'known');
+    $parolelink = Linker::link( SpecialPage::getTitleFor( 'vandalbin' ), wfMessage('parolelink')->escaped(),array(),$action , 'known');
     
     $flags = array();
     if ($row->vand_anon_only)
@@ -1125,7 +1120,7 @@ class VandalbinPager extends ReverseChronologicalPager {
       $flags[] = wfMessage( 'block-log-flags-noautoblock' )->text();
     }
     $flagsstr = implode(', ',$flags);
-    $comment = $sk->commentBlock($reason);
+    $comment = Linker::commentBlock($reason);
     return "<li>$line ($flagsstr) $comment ($parolelink)</li>\n";
   }
 
