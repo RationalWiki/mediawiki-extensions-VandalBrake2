@@ -627,7 +627,7 @@ class VandalForm {
         </td>
       </tr>" .
       Xml::closeElement('table') .
-      html::hidden('wpEditToken', $wgUser->editToken() ) .
+      html::hidden('wpEditToken', $wgUser->getEditToken() ) .
       Xml::closeElement( 'fieldset' ) .
       Xml::closeElement( 'form' ) .
       Xml::tags( 'script', array( 'type' => 'text/javascript' ), 'updateBlockOptions()' ) . "\n"
@@ -843,7 +843,7 @@ class ParoleForm {
         </td>
       </tr>" .
       Xml::closeElement('table') .
-      html::hidden('wpEditToken', $wgUser->editToken() ) .
+      html::hidden('wpEditToken', $wgUser->getEditToken() ) .
       Xml::closeElement( 'fieldset' ) .
       Xml::closeElement( 'form' )
     );
