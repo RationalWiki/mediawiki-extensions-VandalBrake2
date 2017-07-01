@@ -538,9 +538,9 @@ class VandalForm {
     global $wgOut, $wgUser;
     $wgOut->setPagetitle( wfMessage('vandalbrake')->escaped() );
     $wgOut->addWikiMsg( 'vandalbraketext' );
-    $mIpaddress = Xml::label( wfMessage( 'ipadressorusername' )->text(), 'mw-bi-target');
+    $mIpaddress = Xml::label( wfMessage( 'ipaddressorusername' )->text(), 'mw-bi-target');
     $mReason = Xml::label( wfMessage( 'ipbreason' )->text(), 'wpVandReasonList' );
-    $mReasonother = Xml::label( wfMessage('ipbotherreason')->text(), 'vand-reason' );
+    $mReasonother = Xml::label( wfMessage('vandal-otherreason')->text(), 'vand-reason' );
     $user = User::newFromName( $this->VandAddress );
     
     if ( $err ) {
@@ -552,7 +552,7 @@ class VandalForm {
     
     $reasonDropDown = Xml::listDropDown( 'wpVandReasonList', 
       wfMessage( 'ipbreason-dropdown' )->inContentLanguage()->text(),
-      wfMessage( 'ipbreasonotherlist' )->inContentLanguage()->text(), $this->VandReasonList, 'wpVandDropDown', 4 );
+      wfMessage( 'vandal-reasonotherlist' )->inContentLanguage()->text(), $this->VandReasonList, 'wpVandDropDown', 4 );
     $titleObject = SpecialPage::getTitleFor( 'VandalBrake' );
     global $wgStylePath, $wgStyleVersion;
     $wgOut->addHTML(
@@ -601,7 +601,7 @@ class VandalForm {
       "<tr id='wpAnonOnlyRow'>
         <td>&nbsp;</td>
         <td class='mw-input'>".
-          Xml::checkLabel(wfMessage('ipbanononly')->text(), 'anononly', 'anononly', $this->VandAnonOnly, array( 'tabindex' => '3' ) ) ."
+          Xml::checkLabel(wfMessage('anononlyblock')->text(), 'anononly', 'anononly', $this->VandAnonOnly, array( 'tabindex' => '3' ) ) ."
         </td>
       </tr>" .
       "<tr id='wpCreateAccountRow'>
@@ -779,7 +779,7 @@ class ParoleForm {
     global $wgOut, $wgUser;
     $wgOut->setPagetitle( wfMessage('paroletitle')->escaped() );
     $wgOut->addWikiMsg( 'paroletext' );
-    $mIpaddress = Xml::label( wfMessage( 'ipadressorusername' )->text(), 'mw-bi-target');
+    $mIpaddress = Xml::label( wfMessage( 'ipaddressorusername' )->text(), 'mw-bi-target');
     $mReason = Xml::label( wfMessage( 'ipbreason' )->text(), 'vand-reason' );
     
     if ( $err ) {
@@ -967,7 +967,7 @@ class SpecialVandalbin extends SpecialPage {
         html::hidden( 'title', $wgTitle->getPrefixedDbKey() ) .
         Xml::openElement( 'fieldset' ) .
         Xml::element( 'legend', null, wfMessage( 'vandalbin-legend' )->text() ) .
-        Xml::inputLabel( wfMessage( 'ipadressorusername' )->text(), 'wpVandAddress', 'wpVandAddress', /* size */ false, $this->VandAddress ) .
+        Xml::inputLabel( wfMessage( 'ipaddressorusername' )->text(), 'wpVandAddress', 'wpVandAddress', /* size */ false, $this->VandAddress ) .
         '&nbsp;' .
         Xml::submitButton( wfMessage( 'ipblocklist-submit' )->text() ) . '<br />' .
         Xml::closeElement( 'fieldset' )

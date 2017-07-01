@@ -44,6 +44,8 @@ $messages['en'] = array(
   'editlimitnotice'                    => '\'\'\'You are unable to edit because of the edit rate limit.\'\'\' You will be able to edit again in $1 seconds',
   'editlimitnoticeapi'                 => 'You are unable to edit because of the edit rate limit. You will be able to edit again in $1 seconds',
   'right-vandalbin'                    => 'Put users in the vandal bin',
-  'vandallog-showlog'									 => "This user has been binned previously.\n" .
-																					"The vandal log is provided below for reference:",
+  'vandallog-showlog'                  => "This user has been binned previously.\n" .
+                                          "The vandal log is provided below for reference:",
+  'vandal-otherreason'                 => 'Other/additional reason:',
+  'vandal-reasonotherlist'             => 'Other reason',
 );
