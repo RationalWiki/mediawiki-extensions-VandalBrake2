@@ -927,27 +927,25 @@ class SpecialVandal extends SpecialPage {
   function execute( $par ) {
     global $wgRequest, $wgOut, $wgUser;
     if( wfReadOnly() ) {
-		  $wgOut->readOnlyPage();
-		  return;
-		}
-		
-		if( !$wgUser->isAllowed( 'vandalbin' ) ) {
-      $wgOut->permissionRequired( 'vandalbin' );
-      return;
+      throw new ReadOnlyError;
     }
 		
-		$form = new VandalForm( $par );
-		
-		$action = $wgRequest->getVal( 'action' );
-		if ( 'success' == $action )
-		{
-		  $form->showSuccess();
-		} else if ( $wgRequest->wasPosted() && 'submit' == $action && 
-		            $wgUser->matchEditToken( $wgRequest->getVal( 'wpEditToken' ) ) ) {
-		  $form->doSubmit();
-		} else {
-		  $form->showForm( '' );
-		}
+    if( !$wgUser->isAllowed( 'vandalbin' ) ) {
+      throw new PermissionsError( 'vandalbin' );
+    }
+
+    $form = new VandalForm( $par );
+
+    $action = $wgRequest->getVal( 'action' );
+    if ( 'success' == $action )
+    {
+      $form->showSuccess();
+    } else if ( $wgRequest->wasPosted() && 'submit' == $action && 
+      $wgUser->matchEditToken( $wgRequest->getVal( 'wpEditToken' ) ) ) {
+      $form->doSubmit();
+    } else {
+      $form->showForm( '' );
+    }
   }
 }
 
@@ -991,13 +989,11 @@ class SpecialVandalbin extends SpecialPage {
     {
       # Check permissions
       if( !$wgUser->isAllowed( 'vandalbin' ) ) {
-        $wgOut->permissionRequired( 'vandalbin' );
-        return;
+        throw new PermissionsError( 'vandalbin' );
       }
       # Check for database lock
       if( wfReadOnly() ) {
-        $wgOut->readOnlyPage();
-        return;
+        throw new ReadOnlyError;
       }
       $pform->showForm('');
     } elseif ($action == 'submit' && $wgRequest->wasPosted() &&
@@ -1005,13 +1001,11 @@ class SpecialVandalbin extends SpecialPage {
     {
       # Check permissions
       if( !$wgUser->isAllowed( 'vandalbin' ) ) {
-        $wgOut->permissionRequired( 'vandalbin' );
-        return;
+        throw new PermissionsError( 'vandalbin' );
       }
       # Check for database lock
       if( wfReadOnly() ) {
-        $wgOut->readOnlyPage();
-        return;
+        throw new ReadOnlyError;
       }
       $pform->doSubmit();
     } elseif ($action == 'success') {
