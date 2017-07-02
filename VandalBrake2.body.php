@@ -351,6 +351,7 @@ class VandalBrake {
       if ($dt > 0)
       {
         $status->fatal( 'vandalbrakenotice', round($dt / 60), $vandaler->getName(), $reason, $vand_id );
+        $status->value = EditPage::AS_HOOK_ERROR_EXPECTED;
         return false;
       }
     }
@@ -365,6 +366,7 @@ class VandalBrake {
       if ($dt > 0)
       {
         $status->fatal( 'editlimitnotice', $dt );
+        $status->value = EditPage::AS_HOOK_ERROR_EXPECTED;
         return false;      
       }
     }
