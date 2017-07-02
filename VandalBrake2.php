@@ -25,16 +25,8 @@ $wgExtensionCredits['other'][] = array(
 	'description' => 'Limits the editing rate of vandals'
 );
 
-## Normal edit hooks
-if ( defined( 'MW_SUPPORTS_EDITFILTERMERGED' ) ) {
-	$wgHooks['EditFilterMerged'][] = 'VandalBrake::onEditFilterMerged';
-} else {
-	$wgHooks['EditFilter'][] = 'VandalBrake::onEditFilter';
-}
-
-
-## API hook
-$wgHooks['APIEditBeforeSave'][] = 'VandalBrake::onAPIEditBeforeSave';
+## Edit hook
+$wgHooks['EditFilterMergedContent'][] = 'VandalBrake::onEditFilterMergedContent';
 
 ## Account creation hook
 $wgHooks['AbortNewAccount'][] = 'VandalBrake::onAccountCreation';

@@ -244,10 +244,6 @@ class VandalBrake {
     # If we are checking an anon user, this should count. If we are checking a logged in user's IP, this should only count if they are autoblocked
     if ($user->isAnon()) {
       $res3 = $dbr->select('recentchanges','rc_timestamp',array('rc_ip' => $user->getName()),'VandalBrake::getLastEdit',array('ORDER BY' => 'rc_timestamp desc'));
-      if ($res3->numRows() == 0) {
-		sleep ( rand ( 1, 4));
-	}
-
       if ($res3->numRows() != 0)
       {
         $row = $res3->fetchRow();
@@ -339,57 +335,13 @@ class VandalBrake {
     return true;
   }
   
-  static function onEditFilterMerged($editor, $text, &$error, $summary) {
-    global $wgUser;
+  static function onEditFilterMergedContent( $context, $content, $status, $summary, $user, $minoredit ) {
     $t = false;
-    if (VandalBrake::checkVandal(RequestContext::getMain()->getRequest()->getIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
-      $t = VandalBrake::getLastEdit($wgUser);
+    if (VandalBrake::checkVandal(RequestContext::getMain()->getRequest()->getIP(), $user->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
+      $t = VandalBrake::getLastEdit($user);
       # Check the user's IP too, for logged out edits or edits from another account
       # but only if the user is autoblocked or if the block is on the IP, not the user
-      if ( !$wgUser->isAnon() && $autoblocked ) {
-        $t2 = VandalBrake::getLastEdit(new User);
-        $t = max($t,$t2);
-      }
-      global $wgVandalBrakeConfigLimit;
-      $dt = time() - $t;
-      $dt = $wgVandalBrakeConfigLimit - $dt;
-      if ($dt > 0)
-      {        
-        global $wgOut;
-        $text = wfMessage( 'vandalbrakenotice' )->params( round($dt / 60), $vandaler->getName(), $reason, $vand_id )->parse();
-        $wgOut->addHtml( $text );
-        $editor->showEditForm();
-        return false;
-      }
-    }
-    $anon = $wgUser->isAnon();
-    $limited = !in_array('noratelimit',$wgUser->getRights());
-    if ($anon || $limited)
-    {
-      global $wgVandalBrakeConfigAnonLimit, $wgVandalBrakeConfigUserLimit;
-      if (!$t) $t = VandalBrake::getLastEdit($wgUser);
-      $dt = time() - $t;
-      $dt = ($anon ? $wgVandalBrakeConfigAnonLimit : $wgVandalBrakeConfigUserLimit) - $dt;
-      if ($dt > 0)
-      {
-        global $wgOut;
-        $text = wfMessage( 'editlimitnotice' )->params( $dt )->parse();
-        $wgOut->addHtml( $text );
-        $editor->showEditForm();
-        return false;      
-      }
-    }
-    return true;
-  }
-  
-  static function onEditFilter($editor, $text, &$error) {
-    global $wgUser;
-    $t = false;
-    if (VandalBrake::checkVandal(RequestContext::getMain()->getRequest()->getIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
-      $t = VandalBrake::getLastEdit($wgUser);
-      # Check the user's IP too, for logged out edits or edits from another account
-      # but only if the user is autoblocked or if the block is on the IP, not the user
-      if ( !$wgUser->isAnon() && $autoblocked ) {
+      if ( !$user->isAnon() && $autoblocked ) {
         $t2 = VandalBrake::getLastEdit(new User);
         $t = max($t,$t2);
       }
@@ -398,73 +350,28 @@ class VandalBrake {
       $dt = $wgVandalBrakeConfigLimit - $dt;
       if ($dt > 0)
       {
-        global $wgOut;
-        global $wgMessageCache;
-        $messages = $wgMessageCache->getExtensionMessagesFor( 'en' );
-        $text = wfMessage( 'vandalbrakenotice' )->params( round($dt / 60), $vandaler->getName(), $reason, $vand_id )->parse();
-        $wgOut->addHtml( $text );
-        $editor->showEditForm();
+        $status->fatal( 'vandalbrakenotice', round($dt / 60), $vandaler->getName(), $reason, $vand_id );
         return false;
       }
     }
-    $anon = $wgUser->isAnon();
-    $limited = !in_array('noratelimit',$wgUser->getRights());
+    $anon = $user->isAnon();
+    $limited = !in_array('noratelimit',$user->getRights());
     if ($anon || $limited)
     {
       global $wgVandalBrakeConfigAnonLimit, $wgVandalBrakeConfigUserLimit;
-      if (!$t) $t = VandalBrake::getLastEdit($wgUser);
+      if (!$t) $t = VandalBrake::getLastEdit($user);
       $dt = time() - $t;
       $dt = ($anon ? $wgVandalBrakeConfigAnonLimit : $wgVandalBrakeConfigUserLimit) - $dt;
-      if ($dt >= 0)
+      if ($dt > 0)
       {
-        global $wgOut;
-        $text = wfMessage( 'editlimitnotice')->params( $dt )->parse();
-        $wgOut->addHtml( $text );
-        $editor->showEditForm();
+        $status->fatal( 'editlimitnotice', $dt );
         return false;      
       }
     }
     return true;
   }
 
-  static function onAPIEditBeforeSave($EditPage, $text, &$resultArr) {
-    global $wgUser;
-    $t = false;
-    if (VandalBrake::checkVandal(RequestContext::getMain()->getRequest()->getIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
-      $t = VandalBrake::getLastEdit($wgUser);
-      # Check the user's IP too, for logged out edits or edits from another account
-      # but only if the user is autoblocked or if the block is on the IP, not the user
-      if ( !$wgUser->isAnon() && $autoblocked ) {
-        $t2 = VandalBrake::getLastEdit(new User);
-        $t = max($t,$t2);
-      }
-      global $wgVandalBrakeConfigLimit;
-      $dt = time() - $t;
-      $dt = $wgVandalBrakeConfigLimit - $dt;
-      if ($dt > 0)
-      {
-        $resultArr = array('error' => wfMessage( 'vandalbrakenoticeapi' )->params( round($dt / 60), $vandaler->getName(), $reason, $vand_id )->parse() );
-        return false;
-      }
-    }
-    $anon = $wgUser->isAnon();
-    $limited = !in_array('noratelimit',$wgUser->getRights());
-    if ($anon || $limited)
-    {
-      global $wgVandalBrakeConfigAnonLimit, $wgVandalBrakeConfigUserLimit;
-      if (!$t) $t = VandalBrake::getLastEdit($wgUser);
-      $dt = time() - $t;
-      $dt = ($anon ? $wgVandalBrakeConfigAnonLimit : $wgVandalBrakeConfigUserLimit) - $dt;
-      if ($dt > 0)
-      {
-        $resultArr = array('error' => wfMessage( 'editlimitnotice' )->params( $dt )->parse() );
-        return false;
-      }
-    }
-    return true;
-  }
-  
-  static function onAccountCreation($user, $message) {
+  static function onAccountCreation($user, &$message) {
     global $wgUser;
     if (VandalBrake::checkVandal(RequestContext::getMain()->getRequest()->getIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked)) {
       if (!$accountallowed)
