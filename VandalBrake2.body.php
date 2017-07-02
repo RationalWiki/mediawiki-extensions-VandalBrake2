@@ -552,7 +552,8 @@ class VandalForm {
   }
 
   function showLogFragment( $out, $title ) {
-    $out->addHTML( Xml::element( 'h2', NULL, LogPage::logName( 'vandal' ) ) );
+    $log = new LogPage( 'vandal' );
+    $out->addHTML( Xml::element( 'h2', NULL, $log->getName() ) );
     $count = LogEventsList::showLogExtract( $out, 'vandal', $title->getPrefixedText(), '', array(
 				'lim' => 10,
 				'msgKey' => array(
