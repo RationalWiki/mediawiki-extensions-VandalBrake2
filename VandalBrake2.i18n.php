@@ -1,11 +1,11 @@
 <?php
-$messages = array();
+$messages = [];
 
-$messages['en'] = array(
+$messages['en'] = [
   'vandallogname'                      => 'Vandal log',
   'vandallogheader'                    => "This is a log of the vandal brake extension.\n" .
-                                          "Automatically blocked IP addresses are not listed.\n" .
-                                          "See the [[Special:VandalBin|vandal bin]] for the list of currently operational bans and blocks.",
+										  "Automatically blocked IP addresses are not listed.\n" .
+										  "See the [[Special:VandalBin|vandal bin]] for the list of currently operational bans and blocks.",
   'vandallogparole'                    => 'paroled $1',
   'vandallogvandal'                    => 'vandal binned $1 ($2)',
   'vandallogauto'                      => 'Autoblocked because your IP address has been recently used by "[[User:$1|$1]]". The reason given for $1\'s block is: "$2" ',
@@ -45,7 +45,7 @@ $messages['en'] = array(
   'editlimitnoticeapi'                 => 'You are unable to edit because of the edit rate limit. You will be able to edit again in $1 seconds',
   'right-vandalbin'                    => 'Put users in the vandal bin',
   'vandallog-showlog'                  => "This user has been binned previously.\n" .
-                                          "The vandal log is provided below for reference:",
+										  "The vandal log is provided below for reference:",
   'vandal-otherreason'                 => 'Other/additional reason:',
   'vandal-reasonotherlist'             => 'Other reason',
-);
+];

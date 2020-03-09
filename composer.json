@@ -1,0 +1,5 @@
+{
+	"require-dev": {
+		"mediawiki/mediawiki-codesniffer": "29.0.0"
+	}
+}
