@@ -2,42 +2,76 @@
 
 class VandalBrake {
 
-	//logging
-
-	static function vandallogparolehandler( $type, $action, $title = null, $skin = null,
-		$params = [], $filterWikilinks = false
-	) {
-		if ( $type == 'vandal' && $action = 'parole' ) {
-			if ( !$skin ) {
-				return wfMessage( 'vandallogparole' )->rawParams( $title->getPrefixedText() )->escaped();
-			}
-
-			if ( substr( $title->getText(), 0, 1 ) == '#' ) {
-				$titleLink = $title->getText();
-			} else {
-				$id = User::idFromName( $title->getText() );
-				$titleLink = Linker::userLink( $id, $title->getText() )
-				. Linker::userToolLinks( $id, $title->getText(), false, Linker::TOOL_LINKS_NOBLOCK );
-			}
-			return wfMessage( 'vandallogparole' )->rawParams( $titleLink )->escaped();
-		}
+	// Installer hook
+	public static function onLoadExtensionSchemaUpdates( DatabaseUpdater $updater ) {
+		$updater->addExtensionTable( 'vandals', __DIR__ . '/sql/vandals.sql' );
 	}
 
-	static function vandallogvandalhandler( $type, $action, $title = null, $skin = null,
+	//logging
+
+	/**
+	 * vandal/parole log handler
+	 *
+	 * @param string $type
+	 * @param string $action
+	 * @param Title|null $title
+	 * @param Skin|null $skin
+	 * @param array $params
+	 * @param bool $filterWikilinks
+	 * @return string
+	 */
+	public static function vandallogparolehandler( $type, $action, $title = null, $skin = null,
+		$params = [], $filterWikilinks = false
+	) {
+		if ( !$skin ) {
+			return wfMessage( 'vandallogparole' )->rawParams( $title->getPrefixedText() )->escaped();
+		}
+
+		if ( substr( $title->getText(), 0, 1 ) == '#' ) {
+			$titleLink = $title->getText();
+		} else {
+			$id = User::idFromName( $title->getText() );
+			$titleLink = Linker::userLink( $id, $title->getText() )
+			. Linker::userToolLinks( $id, $title->getText(), false, Linker::TOOL_LINKS_NOBLOCK );
+		}
+		return wfMessage( 'vandallogparole' )->rawParams( $titleLink )->escaped();
+	}
+
+	/**
+	 * vandal/vandal log handler
+	 *
+	 * @param string $type
+	 * @param string $action
+	 * @param Title|null $title
+	 * @param Skin|null $skin
+	 * @param array $params
+	 * @param bool $filterWikilinks
+	 * @return string
+	 */
+	public static function vandallogvandalhandler( $type, $action, $title = null, $skin = null,
 		$params = [], $filterWikilinks = false
 	) {
 		if ( !$skin ) {
 			return wfMessage( 'vandallogvandal' )->rawParams( $title->getPrefixedText(), $params[0] )->escaped();
 		}
-		if ( $type == 'vandal' && $action = 'vandal' ) {
-			$id = User::idFromName( $title->getText() );
-			$titleLink = Linker::userLink( $id, $title->getText() )
-			. Linker::userToolLinks( $id, $title->getText(), false, Linker::TOOL_LINKS_NOBLOCK );
-			return wfMessage( 'vandallogvandal' )->rawParams( $titleLink, $params[0] )->escaped();
-		}
+		$id = User::idFromName( $title->getText() );
+		$titleLink = Linker::userLink( $id, $title->getText() )
+		. Linker::userToolLinks( $id, $title->getText(), false, Linker::TOOL_LINKS_NOBLOCK );
+		return wfMessage( 'vandallogvandal' )->rawParams( $titleLink, $params[0] )->escaped();
 	}
 
-	static function ModifyLog( $log_type, $log_action, $title, $paramArray, &$comment, &$revert, $time ) {
+	/**
+	 * @param string $log_type
+	 * @param string $log_action
+	 * @param Title $title
+	 * @param array $paramArray
+	 * @param string &$comment
+	 * @param string &$revert
+	 * @param string $time
+	 * @return bool
+	 * @throws MWException
+	 */
+	static function onLogLine( $log_type, $log_action, $title, $paramArray, &$comment, &$revert, $time ) {
 		if ( $log_type === 'vandal' && $log_action === 'vandal' ) {
 			$revert = '(' . Linker::link(
 				SpecialPage::getTitleFor( 'VandalBin' ),  wfMessage( 'parolelink' )->escaped(),
@@ -47,7 +81,7 @@ class VandalBrake {
 		return true;
 	}
 
-	static function doVandal( $address, $userId, $reason, $blockCreation, $autoblock, $anononly, $dolog = true, $vandaler = null, $automatic = false ) {
+	public static function doVandal( $address, $userId, $reason, $blockCreation, $autoblock, $anononly, $dolog = true, $vandaler = null, $automatic = false ) {
 		global $wgUser;
 		if ( !$vandaler ) { $vandaler = $wgUser;
 		}
@@ -253,17 +287,22 @@ class VandalBrake {
 		}
 	}
 
-	static function userRename( $thing ) {
+	static function onRenameUserSQL( $thing ) {
 		$thing->tables['vandals'] = [ 'vand_address','vand_user' ];
 		return true;
 	}
 
-	static function userRenameLogs( &$logs ) {
+	static function onRenameUserLogs( &$logs ) {
 		$logs[] = 'vandal';
 		return true;
 	}
 
-	static function userGetRights( $user, &$aRights ) {
+	/**
+	 * @param User $user
+	 * @param array &$aRights
+	 * @return bool
+	 */
+	static function onUserGetRights( $user, &$aRights ) {
 		// we cannot be sure that the current IP belongs to $user, so we skip the ip checking
 		if ( self::checkVandal( 0, $user->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked ) ) {
 			$t = self::getLastEdit( $user );
@@ -279,7 +318,12 @@ class VandalBrake {
 		return true;
 	}
 
-	static function userGetGroups( &$user, &$aUserGroups ) {
+	/**
+	 * @param User $user
+	 * @param array &$aUserGroups
+	 * @return bool
+	 */
+	static function onUserEffectiveGroups( $user, &$aUserGroups ) {
 		// we cannot be sure that the current IP belongs to $user, so we skip the ip checking
 		if ( self::checkVandal( 0, $user->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked ) ) {
 			$t = self::getLastEdit( $user );
@@ -295,7 +339,11 @@ class VandalBrake {
 		return true;
 	}
 
-	static function getBlockedStatus( $user ) {
+	/**
+	 * @param $user
+	 * @return bool
+	 */
+	static function onGetBlockedStatus( $user ) {
 		// we cannot be sure that the current IP belongs to $user, so we skip the ip checking
 		$userip = $user->isAnon() ? $user->getName() : 0;
 		$userid = $user->getId();
@@ -314,6 +362,15 @@ class VandalBrake {
 		return true;
 	}
 
+	/**
+	 * @param IContextSource $context
+	 * @param Content $content
+	 * @param Status $status
+	 * @param string $summary
+	 * @param User $user
+	 * @param bool $minoredit
+	 * @return bool
+	 */
 	static function onEditFilterMergedContent( $context, $content, $status, $summary, $user, $minoredit ) {
 		$t = false;
 		if ( self::checkVandal( RequestContext::getMain()->getRequest()->getIP(), $user->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked ) ) {
@@ -350,6 +407,11 @@ class VandalBrake {
 		return true;
 	}
 
+	/**
+	 * @param User $user
+	 * @param string &$message
+	 * @return bool
+	 */
 	static function onAccountCreation( $user, &$message ) {
 		global $wgUser;
 		if ( self::checkVandal( RequestContext::getMain()->getRequest()->getIP(), $wgUser->getId(), $reason, $vandaler, $accountallowed, $vand_id, $autoblocked ) ) {
@@ -381,7 +443,13 @@ class VandalBrake {
 	}
 	*/
 
-	static function onContribs( $id, $title, &$tools ) {
+	/**
+	 * @param int $id
+	 * @param Title $title
+	 * @param array &$tools
+	 * @return bool
+	 */
+	static function onContributionsToolLinks( $id, $title, &$tools ) {
 		global $wgUser;
 		if ( $wgUser->isAllowed( 'block' ) ) {
 			//insert at end
@@ -407,7 +475,7 @@ class VandalBrake {
 class VandalForm {
 	var $VandAddress, $Reason, $VandAccount, $VandAutoblock, $VandAnonOnly;
 
-	function VandalForm( $par ) {
+	function __construct( $par ) {
 		global $wgRequest;
 		$this->VandAddress = $wgRequest->getVal( 'wpVandAddress', $par );
 		$this->VandAddress = strtr( $this->VandAddress, '_', ' ' );
@@ -540,6 +608,10 @@ class VandalForm {
 		}
 	}
 
+	/**
+	 * @param OutputPage $out
+	 * @param Title $title
+	 */
 	function showLogFragment( $out, $title ) {
 		$log = new LogPage( 'vandal' );
 		$out->addHTML( Xml::element( 'h2', null, $log->getName() ) );
@@ -663,7 +735,7 @@ class VandalForm {
 class ParoleForm {
 	var $VandAddress, $Reason, $VandId;
 
-	function ParoleForm( $par ) {
+	function __construct( $par ) {
 		global $wgRequest;
 		$this->VandAddress = $wgRequest->getVal( 'wpVandAddress', $par );
 		$this->VandAddress = strtr( $this->VandAddress, '_', ' ' );
@@ -877,8 +949,7 @@ class SpecialVandalbin extends SpecialPage {
 	function execute( $par ) {
 		global $wgRequest, $wgOut, $wgUser;
 		if ( wfReadOnly() ) {
-			$wgOut->readOnlyPage();
-			return;
+			throw new ReadOnlyError;
 		}
 
 		global $wgRequest;
@@ -949,7 +1020,6 @@ class VandalbinPager extends ReverseChronologicalPager {
 	}
 
 	function getStartBody() {
-		wfProfileIn( __METHOD__ );
 		// Do a link batch query
 		$this->mResult->seek( 0 );
 		$lb = new LinkBatch;
@@ -970,7 +1040,6 @@ class VandalbinPager extends ReverseChronologicalPager {
 			$lb->add( NS_USER_TALK, $name );
 		}
 		$lb->execute();
-		wfProfileOut( __METHOD__ );
 		return '';
 	}
 

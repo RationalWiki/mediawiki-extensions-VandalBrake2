@@ -25,6 +25,9 @@ $wgExtensionCredits['other'][] = [
 	'description' => 'Limits the editing rate of vandals'
 ];
 
+// Installer
+$wgHooks['LoadExtensionSchemaUpdates'][] = 'VandalBrake::onLoadExtensionSchemaUpdates';
+
 // Edit hook
 $wgHooks['EditFilterMergedContent'][] = 'VandalBrake::onEditFilterMergedContent';
 
@@ -33,20 +36,20 @@ $wgHooks['AbortNewAccount'][] = 'VandalBrake::onAccountCreation';
 
 // add vandal link to Special:Contributions and recent changes
 //$wgHooks['OldChangesListRecentChangesLine'][] = 'VandalBrake::onRC'; //FIXME: Doesn't work
-$wgHooks['ContributionsToolLinks'][] = 'VandalBrake::onContribs';
+$wgHooks['ContributionsToolLinks'][] = 'VandalBrake::onContributionsToolLinks';
 
 // Remove certain user rights from vandals
-$wgHooks['UserGetRights'][] = 'VandalBrake::userGetRights';
+$wgHooks['UserGetRights'][] = 'VandalBrake::onUserGetRights';
 
 // Handle user renames
-$wgHooks['RenameUserSQL'][] = 'VandalBrake::userRename';
-$wgHooks['RenameUserLogs'][] = 'VandalBrake::userRenameLogs';
+$wgHooks['RenameUserSQL'][] = 'VandalBrake::onRenameUserSQL';
+$wgHooks['RenameUserLogs'][] = 'VandalBrake::onRenameUserLogs';
 
-// Dinamically asign the vandalbrake user group
-// $wgHooks['UserEffectiveGroups'][] = 'VandalBrake::userGetGroups';
+// Dynamically asign the vandalbrake user group
+// $wgHooks['UserEffectiveGroups'][] = 'VandalBrake::onUserEffectiveGroups';
 
-// Dinamically alter the block status
-// $wgHooks['GetBlockedStatus'][] = 'VandalBrake::getBlockedStatus';
+// Dynamically alter the block status
+// $wgHooks['GetBlockedStatus'][] = 'VandalBrake::onGetBlockedStatus';
 
 // Register special pages
 $wgSpecialPages['VandalBrake'] = 'SpecialVandal';
@@ -60,10 +63,7 @@ $wgLogActionsHandlers['vandal/parole'] = 'VandalBrake::vandallogparolehandler';
 $wgLogActionsHandlers['vandal/vandal'] = 'VandalBrake::vandallogvandalhandler';
 
 // Modify vandal log lines to show parole link
-$wgHooks['LogLine'][] = 'VandalBrake::ModifyLog';
-
-// init function, uncomment to check for the existence of the required table
-// $wgExtensionFunctions[] = "setupVandalBrake";
+$wgHooks['LogLine'][] = 'VandalBrake::onLogLine';
 
 // include path
 $wgVandalBrakeIP = __DIR__;
@@ -74,12 +74,3 @@ $wgAutoloadClasses['VandalBrake'] = "$wgVandalBrakeIP/VandalBrake2.body.php";
 $wgAutoloadClasses['SpecialVandal'] = "$wgVandalBrakeIP/VandalBrake2.body.php";
 $wgAutoloadClasses['SpecialVandalbin'] = "$wgVandalBrakeIP/VandalBrake2.body.php";
 
-function setupVandalBrake() {
-	// Check if the table exists
-	$dbr = wfGetDB( DB_REPLICA );
-	if ( !$dbr->tableExists( 'vandals' ) ) {
-		throw new Exception( "Missing vandals table from database" );
-		// create table /*$wgDBprefix*/vandals (vand_id int NOT NULL auto_increment, vand_address tinyblob NOT NULL, vand_user int unsigned NOT NULL default '0', vand_by int unsigned NOT NULL default '0', vand_reason tinyblob NOT NULL, vand_timestamp binary(14) NOT NULL default '', vand_account bool NOT NULL default 0, vand_autoblock bool NOT NULL default 0, vand_anon_only bool NOT NULL default 0, vand_auto bool NOT NULL default 0, PRIMARY KEY vand_id (vand_id), INDEX vand_user (vand_user)) /*$wgDBTableOptions*/;
-		die( -1 );
-	}
-}
