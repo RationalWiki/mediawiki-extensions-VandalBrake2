@@ -1,5 +1,11 @@
 <?php
 
+namespace MediaWiki\Extension\VandalBrake;
+
+use PermissionsError;
+use ReadOnlyError;
+use SpecialPage;
+
 class SpecialVandal extends SpecialPage {
 	function __construct() {
 		parent::__construct( 'VandalBrake', 'block' );

@@ -1,5 +1,13 @@
 <?php
 
+namespace MediaWiki\Extension\VandalBrake;
+
+use Html;
+use IP;
+use SpecialPage;
+use User;
+use Xml;
+
 class ParoleForm {
 	var $VandAddress, $Reason, $VandId;
 
@@ -49,7 +57,7 @@ class ParoleForm {
 			);
 		} else {
 			$wgOut->addHTML(
-				"#$this->VandId" . html::hidden( 'id', $this->VandId )
+				"#$this->VandId" . Html::hidden( 'id', $this->VandId )
 			);
 		}
 		$wgOut->addHTML(
@@ -86,7 +94,7 @@ class ParoleForm {
 		</td>
 	  </tr>" .
 			Xml::closeElement( 'table' ) .
-			html::hidden( 'wpEditToken', $wgUser->getEditToken() ) .
+			Html::hidden( 'wpEditToken', $wgUser->getEditToken() ) .
 			Xml::closeElement( 'fieldset' ) .
 			Xml::closeElement( 'form' )
 		);
@@ -149,7 +157,7 @@ class ParoleForm {
 		global $wgOut;
 		$wgOut->setPagetitle( wfMessage( 'VandalBin' )->escaped() );
 		$wgOut->setSubtitle( wfMessage( 'parolesuccessub' )->escaped() );
-		$text = $this->VanAddress ? ( wfMessage( 'parolesuccesstext' )->params( $this->VandAddress )->parse() )
+		$text = $this->VandAddress ? ( wfMessage( 'parolesuccesstext' )->params( $this->VandAddress )->parse() )
 			: wfMessage( 'parolesuccesstextanon' )->escaped();
 		$wgOut->addHTML( $text );
 	}

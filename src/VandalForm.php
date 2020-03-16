@@ -1,5 +1,19 @@
 <?php
 
+namespace MediaWiki\Extension\VandalBrake;
+
+use Html;
+use IP;
+use Linker;
+use LogEventsList;
+use LogPage;
+use OutputPage;
+use RequestContext;
+use SpecialPage;
+use Title;
+use User;
+use Xml;
+
 class VandalForm {
 	var $VandAddress, $Reason, $VandAccount, $VandAutoblock, $VandAnonOnly;
 

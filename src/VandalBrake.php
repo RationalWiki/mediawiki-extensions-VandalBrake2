@@ -1,5 +1,22 @@
 <?php
 
+namespace MediaWiki\Extension\VandalBrake;
+
+use Content;
+use DatabaseUpdater;
+use EditPage;
+use IContextSource;
+use Linker;
+use LogPage;
+use MWException;
+use RequestContext;
+use Skin;
+use SpecialPage;
+use Status;
+use Title;
+use User;
+
+
 class VandalBrake {
 
 	// Installer hook
@@ -248,6 +265,10 @@ class VandalBrake {
 		return false;
 	}
 
+	/**
+	 * @param User $user
+	 * @return int UNIX timestamp
+	 */
 	static function getLastEdit( $user ) {
 		if ( $user->isAnon() ) {
 			$condrev = [ 'rev_user_text' => $user->getName() ];
@@ -340,7 +361,7 @@ class VandalBrake {
 	}
 
 	/**
-	 * @param $user
+	 * @param User $user
 	 * @return bool
 	 */
 	static function onGetBlockedStatus( $user ) {

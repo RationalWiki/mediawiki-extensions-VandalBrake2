@@ -1,5 +1,13 @@
 <?php
 
+namespace MediaWiki\Extension\VandalBrake;
+
+use Html;
+use PermissionsError;
+use ReadOnlyError;
+use SpecialPage;
+use Xml;
+
 class SpecialVandalbin extends SpecialPage {
 	var $VandAddress;
 
@@ -14,7 +22,7 @@ class SpecialVandalbin extends SpecialPage {
 		global $wgScript, $wgTitle, $wgRequest;
 		return Xml::tags(
 			'form', [ 'action' => $wgScript ],
-			html::hidden( 'title', $wgTitle->getPrefixedDbKey() ) .
+			Html::hidden( 'title', $wgTitle->getPrefixedDbKey() ) .
 			Xml::openElement( 'fieldset' ) .
 			Xml::element( 'legend', null, wfMessage( 'vandalbin-legend' )->text() ) .
 			Xml::inputLabel( wfMessage( 'ipaddressorusername' )->text(), 'wpVandAddress', 'wpVandAddress', /* size */ false, $this->VandAddress ) .

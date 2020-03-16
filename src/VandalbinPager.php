@@ -2,6 +2,12 @@
 
 namespace MediaWiki\Extension\VandalBrake;
 
+use LinkBatch;
+use Linker;
+use ReverseChronologicalPager;
+use SpecialPage;
+use User;
+
 class VandalbinPager extends ReverseChronologicalPager {
 	public $mConds;
 
