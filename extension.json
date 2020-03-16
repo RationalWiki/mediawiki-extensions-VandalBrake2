@@ -1,0 +1,73 @@
+{
+	"name": "VandalBrake",
+	"author": [
+		"[http://rationalwiki.com/wiki/User:Nx Nx]",
+		"Tim Starling"
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:VandalBrake",
+	"description": "Limits the editing rate of vandals",
+	"type": "other",
+	"requires": {
+		"MediaWiki": ">= 1.29.0"
+	},
+	"GroupPermissions": {
+		"sysop": {
+			"vandalbin": true
+		}
+	},
+	"LogActionsHandlers": {
+		"vandal/parole": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::vandallogparolehandler",
+		"vandal/vandal": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::vandallogvandalhandler"
+	},
+	"LogHeaders": {
+		"vandal": "vandallogheader"
+	},
+	"LogNames": {
+		"vandal": "vandallogname"
+	},
+	"LogTypes": [
+		"vandal"
+	],
+	"SpecialPages": {
+		"VandalBrake": "MediaWiki\\Extension\\VandalBrake\\SpecialVandal",
+		"VandalBin": "MediaWiki\\Extension\\VandalBrake\\SpecialVandalbin"
+	},
+	"ExtensionMessagesDirs": {
+		"VandalBrake": "i18n"
+	},
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\VandalBrake\\": "src/"
+	},
+	"Hooks": {
+		"LoadExtensionSchemaUpdates": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onLoadExtensionSchemaUpdates",
+		"EditFilterMergedContent": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onEditFilterMergedContent",
+		"AbortNewAccount": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onAccountCreation",
+		"ContributionsToolLinks": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onContributionsToolLinks",
+		"UserGetRights": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onUserGetRights",
+		"RenameUserSQL": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onRenameUserSQL",
+		"RenameUserLogs": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onRenameUserLogs",
+		"LogLine": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onLogLine"
+	},
+	"config": {
+		"VandalBrakeConfigLimit": {
+			"value": 1800
+		},
+		"VandalBrakeConfigAnonLimit": {
+			"value": 30
+		},
+		"VandalBrakeConfigUserLimit": {
+			"value": 15
+		},
+		"VandalBrakeConfigRemoveRights": {
+			"value": [
+				"move",
+				"skipcaptcha",
+				"rollback"
+			]
+		},
+		"VandalBrakeConfigLimitRights": {
+			"value": []
+		}
+	},
+	"manifest_version": 2
+}
