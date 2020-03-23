@@ -2,12 +2,15 @@
 
 namespace MediaWiki\Extension\VandalBrake;
 
+use ActorMigration;
 use Content;
 use DatabaseUpdater;
 use EditPage;
 use IContextSource;
 use Linker;
 use LogPage;
+use MediaWiki\Block\SystemBlock;
+use MediaWiki\MediaWikiServices;
 use MWException;
 use RequestContext;
 use Skin;
@@ -19,9 +22,12 @@ use User;
 
 class VandalBrake {
 
-	// Installer hook
+	/**
+	 * Installer hook
+	 * @param DatabaseUpdater $updater
+	 */
 	public static function onLoadExtensionSchemaUpdates( DatabaseUpdater $updater ) {
-		$updater->addExtensionTable( 'vandals', __DIR__ . '/sql/vandals.sql' );
+		$updater->addExtensionTable( 'vandals', __DIR__ . '/../sql/vandals.sql' );
 	}
 
 	//logging
@@ -78,6 +84,8 @@ class VandalBrake {
 	}
 
 	/**
+	 * LogLine handler. Add a parole link to vandal/vandal log entries.
+	 *
 	 * @param string $log_type
 	 * @param string $log_action
 	 * @param Title $title
@@ -90,17 +98,34 @@ class VandalBrake {
 	 */
 	static function onLogLine( $log_type, $log_action, $title, $paramArray, &$comment, &$revert, $time ) {
 		if ( $log_type === 'vandal' && $log_action === 'vandal' ) {
-			$revert = '(' . Linker::link(
+			$lr = MediaWikiServices::getInstance()->getLinkRenderer();
+			$revert = '(' . $lr->makeKnownLink(
 					SpecialPage::getTitleFor( 'VandalBin' ),  wfMessage( 'parolelink' )->escaped(),
-					[], [ 'action' => 'parole', 'wpVandAddress' => $title->getText() ], 'known'
+					[], [ 'action' => 'parole', 'wpVandAddress' => $title->getText() ]
 				) . ')';
 		}
 		return true;
 	}
 
-	public static function doVandal( $address, $userId, $reason, $blockCreation, $autoblock, $anononly, $dolog = true, $vandaler = null, $automatic = false ) {
+	/**
+	 * Add a vandal to the database and log the action
+	 *
+	 * @param string $address The block target
+	 * @param int $userId The target user ID
+	 * @param string $reason The block reason
+	 * @param bool $blockCreation
+	 * @param bool $autoblock Also block the last-known IP address
+	 * @param bool $anononly
+	 * @param bool $dolog
+	 * @param User|null $vandaler The admin user performing the addition
+	 * @param bool $automatic
+	 */
+	public static function doVandal( $address, $userId, $reason, $blockCreation, $autoblock,
+		$anononly, $dolog = true, $vandaler = null, $automatic = false
+	) {
 		global $wgUser;
-		if ( !$vandaler ) { $vandaler = $wgUser;
+		if ( !$vandaler ) {
+			$vandaler = $wgUser;
 		}
 		$dbw = wfGetDB( DB_MASTER );
 		if ( $userId == 0 ) {
@@ -108,7 +133,8 @@ class VandalBrake {
 		} else {
 			$anononly = false;
 		}
-		$a = [ 'vand_address' => $address,
+		$a = [
+			'vand_address' => $address,
 			'vand_user' => $userId,
 			'vand_by' => $vandaler->getId(),
 			'vand_reason' => $reason,
@@ -118,17 +144,21 @@ class VandalBrake {
 			'vand_anon_only' => $anononly,
 			'vand_auto' => $automatic
 		];
-		$dbw->insert( 'vandals', $a, 'VandalBrake::doVandal' );
-		$dbw->commit();
+		$dbw->insert( 'vandals', $a, __METHOD__ );
 		// autoblock
 		if ( $autoblock ) {
-			$res_ip = $dbw->select( 'recentchanges', 'rc_ip', [ 'rc_user_text' => $address ], 'VandalForm::doVandal' );
+			$res_ip = $dbw->select(
+				'recentchanges',
+				'rc_ip',
+				[ 'rc_user_text' => $address ],
+				__METHOD__
+			);
 			if ( $row = $res_ip->fetchRow() ) {
 				$ip = $row['rc_ip'];
-				$res_ip->free();
 				// parole first to prevent duplicate rows
 				self::doParole( 0, $ip, '', false );
-				$a = [ 'vand_address' => $ip,
+				$a = [
+					'vand_address' => $ip,
 					'vand_user' => 0,
 					'vand_by' => $vandaler->getId(),
 					'vand_reason' => wfMessage( 'vandallogauto' )->params( $address, $reason )->text(),
@@ -138,8 +168,7 @@ class VandalBrake {
 					'vand_anon_only' => false,
 					'vand_auto' => true,
 				];
-				$dbw->insert( 'vandals', $a, 'VandalBrake::doVandal' );
-				$dbw->commit();
+				$dbw->insert( 'vandals', $a, __METHOD__ );
 			}
 		}
 		// Log:
@@ -171,8 +200,7 @@ class VandalBrake {
 			$cond = [ 'vand_id' => $id ];
 		}
 		$dbw = wfGetDB( DB_MASTER );
-		$dbw->delete( 'vandals', $cond, 'VandalBrake::doParole' );
-		$dbw->commit();
+		$dbw->delete( 'vandals', $cond, __METHOD__ );
 		if ( $dolog ) {
 			$log = new LogPage( 'vandal' );
 			$target = Title::makeTitle( NS_USER, $address ? $address : "#$id" );
@@ -191,7 +219,20 @@ class VandalBrake {
 			$cond = [
 				'vand_user' => $userId,
 			];
-			$res = $dbr->select( 'vandals', 'vand_id, vand_address, vand_user, vand_anon_only, vand_autoblock, vand_account, vand_reason, vand_by', $cond, 'VandalBrake::checkVandal' );
+			$res = $dbr->select(
+				'vandals',
+				[
+					'vand_id',
+					'vand_address',
+					'vand_user',
+					'vand_anon_only',
+					'vand_autoblock',
+					'vand_account',
+					'vand_reason',
+					'vand_by'
+				],
+				$cond,
+				__METHOD__ );
 			if ( $res->numRows() != 0 ) {
 				$row = $res->fetchRow();
 				$accountallowed = $row['vand_account'];
@@ -205,10 +246,7 @@ class VandalBrake {
 				}
 				$reason = $row['vand_reason'];
 				$vandaler = User::newFromId( $row['vand_by'] );
-				$res->free();
 				$usernamefound = true;
-			} else {
-				$res->free();
 			}
 		}
 
@@ -217,7 +255,20 @@ class VandalBrake {
 			$cond = [
 				'vand_address' => $ip,
 			];
-			$res = $dbr->select( 'vandals', 'vand_id, vand_address, vand_user, vand_anon_only, vand_autoblock, vand_account, vand_reason, vand_by', $cond, 'VandalBrake::checkVandal' );
+			$res = $dbr->select(
+				'vandals',
+				[
+					'vand_id',
+					'vand_address',
+					'vand_user',
+					'vand_anon_only',
+					'vand_autoblock',
+					'vand_account',
+					'vand_reason',
+					'vand_by'
+				],
+				$cond,
+				__METHOD__ );
 			if ( $res->numRows() != 0 ) {
 				// user is ip blocked, return true if also username blocked
 				// if the user is logged in and anon_only is set, don't apply ip block
@@ -229,7 +280,6 @@ class VandalBrake {
 					if ( !$checkip ) {
 						$checkip = !$anononly;
 					}
-					$res->free();
 					return true;
 				} elseif ( !$anononly || $userId == 0 ) {
 					if ( !$checkip ) {
@@ -238,11 +288,9 @@ class VandalBrake {
 					$accountallowed = !$row['vand_account'];
 					$reason = $row['vand_reason'];
 					$vandaler = User::newFromId( $row['vand_by'] );
-					$res->free();
 					return true;
 				}
 			} elseif ( $performautoblock ) {
-				$res->free();
 				$user = User::newFromId( $userId );
 				// parole to prevent duplicate rows
 				self::doParole( 0, $ip, '', false );
@@ -253,7 +301,6 @@ class VandalBrake {
 			} elseif ( $usernamefound ) {
 				return true;
 			}
-			$res->free();
 		} else {
 			// special case for userGetRights hook
 			if ( $usernamefound ) {
@@ -270,39 +317,81 @@ class VandalBrake {
 	 * @return int UNIX timestamp
 	 */
 	static function getLastEdit( $user ) {
-		if ( $user->isAnon() ) {
-			$condrev = [ 'rev_user_text' => $user->getName() ];
-			$condar = [ 'ar_user_text' => $user->getName() ];
-		} else {
-			$condrev = [ 'rev_user' => $user->getId() ];
-			$condar = [ 'ar_user' => $user->getId() ];
-		}
+		$t1 = self::getLastRevisionTimestamp( $user );
+		$t2 = self::getLastArchiveTimestamp( $user );
 		$dbr = wfGetDB( DB_REPLICA );
-		$res1 = $dbr->select( 'revision', 'rev_timestamp', $condrev, 'VandalBrake::getLastEdit', [ 'ORDER BY' => 'rev_timestamp desc' ] );
-		$res2 = $dbr->select( 'archive', 'ar_timestamp', $condar, 'VandalBrake::getLastEdit', [ 'ORDER BY' => 'ar_timestamp desc' ] );
 		$t3 = 0;
 		// If we have the user's IP, we can also check the recent changes table to see if there's a logged in edit
 		// If we are checking an anon user, this should count. If we are checking a logged in user's IP, this should only count if they are autoblocked
 		if ( $user->isAnon() ) {
-			$res3 = $dbr->select( 'recentchanges', 'rc_timestamp', [ 'rc_ip' => $user->getName() ], 'VandalBrake::getLastEdit', [ 'ORDER BY' => 'rc_timestamp desc' ] );
+			$res3 = $dbr->select( 'recentchanges', 'rc_timestamp', [ 'rc_ip' => $user->getName() ], __METHOD__, [ 'ORDER BY' => 'rc_timestamp desc' ] );
 			if ( $res3->numRows() != 0 ) {
 				$row = $res3->fetchRow();
 				$t3 = $row['rc_timestamp'];
 			}
 		}
-		$t1 = 0;
-		$t2 = 0;
-		if ( $res1->numRows() != 0 ) {
-			$row = $res1->fetchRow();
-			$t1 = $row['rev_timestamp'];
-		}
-		if ( $res2->numRows() != 0 ) {
-			$row = $res2->fetchRow();
-			$t2 = $row['ar_timestamp'];
-		}
 		if ( max( $t1, $t2, $t3 ) != 0 ) {
 			$t = wfTimestamp( TS_UNIX, max( $t1, $t2, $t3 ) );
 			return $t;
+		} else {
+			return 0;
+		}
+	}
+
+	/**
+	 * Get the most recent timestamp from the archive table
+	 * @param User $user
+	 * @return string|int
+	 */
+	private static function getLastArchiveTimestamp( $user ) {
+		$dbr = wfGetDB( DB_REPLICA );
+		$revisionStore = MediaWikiServices::getInstance()->getRevisionStore();
+		$arQuery = $revisionStore->getArchiveQueryInfo();
+		$actorQuery = ActorMigration::newMigration()
+			->getWhere( $dbr, 'ar_user', $user );
+		$row = $dbr->selectRow(
+			array_merge( $arQuery['tables'], $actorQuery['tables'] ),
+			[ 'ar_timestamp' ],
+			array_merge( $arQuery['conds'], $actorQuery['conds'] ),
+			__METHOD__,
+			[
+				'LIMIT' => 1,
+				'ORDER BY' => 'ar_timestamp DESC'
+			],
+			array_merge( $arQuery['join_conds'], $actorQuery['join_conds'] )
+		);
+		if ( $row ) {
+			return $row->ar_timestamp;
+		} else {
+			return 0;
+		}
+	}
+
+	/**
+	 * Get the most recent timestamp from the revision table
+	 *
+	 * @param User $user
+	 * @return int|string
+	 */
+	private static function getLastRevisionTimestamp( $user ) {
+		$dbr = wfGetDB( DB_REPLICA );
+		$revisionStore = MediaWikiServices::getInstance()->getRevisionStore();
+		$revQuery = $revisionStore->getQueryInfo();
+		$actorQuery = ActorMigration::newMigration()
+			->getWhere( $dbr, 'rev_user', $user );
+		$row = $dbr->selectRow(
+			array_merge( $revQuery['tables'], $actorQuery['tables'] ),
+			[ 'rev_timestamp' ],
+			array_merge( $revQuery['conds'], $actorQuery['conds'] ),
+			__METHOD__,
+			[
+				'LIMIT' => 1,
+				'ORDER BY' => 'rev_timestamp DESC'
+			],
+			array_merge( $revQuery['join_conds'], $actorQuery['join_conds'] )
+		);
+		if ( $row ) {
+			return $row->rev_timestamp;
 		} else {
 			return 0;
 		}
@@ -364,20 +453,28 @@ class VandalBrake {
 	 * @param User $user
 	 * @return bool
 	 */
-	static function onGetBlockedStatus( $user ) {
+	static function onGetUserBlock( $user, $ip, &$block ) {
+		if ( $block ) {
+			return true;
+		}
 		// we cannot be sure that the current IP belongs to $user, so we skip the ip checking
 		$userip = $user->isAnon() ? $user->getName() : 0;
 		$userid = $user->getId();
 		if ( self::checkVandal( $userip, $userid, $reason, $vandaler, $accountallowed, $vand_id, $autoblocked ) ) {
+			/** @var User $vandaler */
 			$t = self::getLastEdit( $user );
 			global $wgVandalBrakeConfigLimit;
 			$dt = time() - $t;
 			$dt = $wgVandalBrakeConfigLimit - $dt;
 			if ( $dt > 0 ) {
 				// user is binned and brake is active
-				$user->mBlockedby = $vandaler->getName();
-				$user->mBlockreason = wfMessage( 'vandalbrakenoticeblock' )->params( $reason, round( $dt / 60 ) )->escaped();
-				$user->mBlock->mId = $vand_id;
+				$block = new SystemBlock( [
+					'address' => $userip,
+					'by' => $vandaler->getId(),
+					'byText' => $vandaler->getName(),
+					'reason' => wfMessage( 'vandalbrakenoticeblock' )
+						->params( $reason, round( $dt / 60 ) )->escaped()
+				] );
 			}
 		}
 		return true;
@@ -406,13 +503,15 @@ class VandalBrake {
 			$dt = time() - $t;
 			$dt = $wgVandalBrakeConfigLimit - $dt;
 			if ( $dt > 0 ) {
+				/** @var User $vandaler */
 				$status->fatal( 'vandalbrakenotice', round( $dt / 60 ), $vandaler->getName(), $reason, $vand_id );
 				$status->value = EditPage::AS_HOOK_ERROR_EXPECTED;
 				return false;
 			}
 		}
 		$anon = $user->isAnon();
-		$limited = !in_array( 'noratelimit', $user->getRights() );
+		$pm = MediaWikiServices::getInstance()->getPermissionManager();
+		$limited = !$pm->userHasRight( $user, 'noratelimit' );
 		if ( $anon || $limited ) {
 			global $wgVandalBrakeConfigAnonLimit, $wgVandalBrakeConfigUserLimit;
 			if ( !$t ) { $t = self::getLastEdit( $user );
@@ -472,9 +571,12 @@ class VandalBrake {
 	 */
 	static function onContributionsToolLinks( $id, $title, &$tools ) {
 		global $wgUser;
-		if ( $wgUser->isAllowed( 'block' ) ) {
+		$services = MediaWikiServices::getInstance();
+		$pm = $services->getPermissionManager();
+		$lr = $services->getLinkRenderer();
+		if ( $pm->userHasRight( $wgUser, 'block' ) ) {
 			//insert at end
-			$tools[] = Linker::link(
+			$tools[] = $lr->makeKnownLink(
 				SpecialPage::getTitleFor( 'VandalBrake' ),
 				wfMessage( 'vandalbin-contribs' )->escaped(),
 				[],
@@ -482,7 +584,7 @@ class VandalBrake {
 			);
 		}
 		//insert vandal log
-		$tools[] = Linker::link(
+		$tools[] = $lr->makeKnownLink(
 			SpecialPage::getTitleFor( 'Log' ),
 			wfMessage( 'vandallog-contribs' )->escaped(),
 			[],

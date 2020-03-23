@@ -3,6 +3,7 @@
 namespace MediaWiki\Extension\VandalBrake;
 
 use Html;
+use MediaWiki\MediaWikiServices;
 use PermissionsError;
 use ReadOnlyError;
 use SpecialPage;
@@ -13,13 +14,14 @@ class SpecialVandalbin extends SpecialPage {
 
 	function __construct() {
 		parent::__construct( 'VandalBin' );
-		// SpecialPage::setGroup('VandalBrake','users');
-		global $wgSpecialPageGroups;
-		$wgSpecialPageGroups['VandalBin'] = 'users';
+	}
+
+	public function getGroupName() {
+		return 'users';
 	}
 
 	function searchForm() {
-		global $wgScript, $wgTitle, $wgRequest;
+		global $wgScript, $wgTitle;
 		return Xml::tags(
 			'form', [ 'action' => $wgScript ],
 			Html::hidden( 'title', $wgTitle->getPrefixedDbKey() ) .
@@ -33,20 +35,19 @@ class SpecialVandalbin extends SpecialPage {
 	}
 
 	function execute( $par ) {
-		global $wgRequest, $wgOut, $wgUser;
 		if ( wfReadOnly() ) {
 			throw new ReadOnlyError;
 		}
 
-		global $wgRequest;
-		$this->VandAddress = $wgRequest->getVal( 'wpVandAddress', $par );
+		$this->VandAddress = $this->getRequest()->getVal( 'wpVandAddress', $par );
 		$this->VandAddress = strtr( $this->VandAddress, '_', ' ' );
-		$action = $wgRequest->getText( 'action' );
+		$action = $this->getRequest()->getText( 'action' );
 
+		$pm = MediaWikiServices::getInstance()->getPermissionManager();
 		$pform = new ParoleForm( $par );
 		if ( $action == 'parole' ) {
 			// Check permissions
-			if ( !$wgUser->isAllowed( 'vandalbin' ) ) {
+			if ( !$pm->userHasRight( $this->getUser(), 'vandalbin' ) ) {
 				throw new PermissionsError( 'vandalbin' );
 			}
 			// Check for database lock
@@ -54,11 +55,11 @@ class SpecialVandalbin extends SpecialPage {
 				throw new ReadOnlyError;
 			}
 			$pform->showForm( '' );
-		} elseif ( $action == 'submit' && $wgRequest->wasPosted()
-			&& $wgUser->matchEditToken( $wgRequest->getVal( 'wpEditToken' ) )
+		} elseif ( $action == 'submit' && $this->getRequest()->wasPosted()
+			&& $this->getUser()->matchEditToken( $this->getRequest()->getVal( 'wpEditToken' ) )
 		) {
 			// Check permissions
-			if ( !$wgUser->isAllowed( 'vandalbin' ) ) {
+			if ( !$pm->userHasRight( $this->getUser(), 'vandalbin' ) ) {
 				throw new PermissionsError( 'vandalbin' );
 			}
 			// Check for database lock
@@ -71,26 +72,25 @@ class SpecialVandalbin extends SpecialPage {
 			$this->VandAddress = null;
 		}
 
-		// $wgOut->addWikiMsg( 'vandalbintext' );
-		$wgOut->addHTML( $this->searchForm() );
+		// $this->getOutput()->addWikiMsg( 'vandalbintext' );
+		$this->getOutput()->addHTML( $this->searchForm() );
 		$this->setHeaders();
-		$dbr = wfGetDB( DB_REPLICA );
 		$conds = [];
 		if ( $this->VandAddress ) {
 			$conds['vand_address'] = $this->VandAddress;
 		}
 		$pager = new VandalbinPager( $conds );
 		if ( $pager->getNumRows() ) {
-			$wgOut->addHTML(
+			$this->getOutput()->addHTML(
 				$pager->getNavigationBar() .
 				Xml::tags( 'ul', null, $pager->getBody() ) .
 				$pager->getNavigationBar()
 			);
 		} else {
 			if ( $this->VandAddress ) {
-				$wgOut->addWikiMsg( 'vandalbin-notfound' );
+				$this->getOutput()->addWikiMsg( 'vandalbin-notfound' );
 			} else {
-				$wgOut->addWikiMsg( 'vandalbin-empty' );
+				$this->getOutput()->addWikiMsg( 'vandalbin-empty' );
 			}
 		}
 	}

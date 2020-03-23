@@ -7,15 +7,19 @@ use IP;
 use Linker;
 use LogEventsList;
 use LogPage;
+use MediaWiki\Linker\LinkRenderer;
+use MediaWiki\MediaWikiServices;
 use OutputPage;
-use RequestContext;
 use SpecialPage;
 use Title;
 use User;
 use Xml;
 
 class VandalForm {
-	var $VandAddress, $Reason, $VandAccount, $VandAutoblock, $VandAnonOnly;
+	var $VandAddress, $Reason, $VandAccount, $VandAutoblock, $VandAnonOnly, $VandReasonList;
+
+	/** @var LinkRenderer */
+	private $linker;
 
 	function __construct( $par ) {
 		global $wgRequest;
@@ -24,10 +28,10 @@ class VandalForm {
 		$this->Reason = $wgRequest->getText( 'wpVandReason' );
 		$this->VandReasonList = $wgRequest->getText( 'wpVandReasonList' );
 		// checkboxes
-		$byDefault = !$wgRequest->wasPosted();
 		$this->VandAccount = $wgRequest->getBool( 'preventaccount', false );
 		$this->VandAutoblock = $wgRequest->getBool( 'autoblock', false );
 		$this->VandAnonOnly = $wgRequest->getBool( 'anononly', false );
+		$this->linker = MediaWikiServices::getInstance()->getLinkRenderer();
 	}
 
 	function showForm( $err ) {
@@ -157,7 +161,7 @@ class VandalForm {
 	function showLogFragment( $out, $title ) {
 		$log = new LogPage( 'vandal' );
 		$out->addHTML( Xml::element( 'h2', null, $log->getName() ) );
-		$count = LogEventsList::showLogExtract(
+		LogEventsList::showLogExtract(
 			$out, 'vandal', $title->getPrefixedText(), '', [
 				'lim' => 10,
 				'msgKey' => [
@@ -170,44 +174,43 @@ class VandalForm {
 	}
 
 	private function getConvenienceLinks() {
-		$skin = RequestContext::getMain()->getSkin();
 		if ( $this->VandAddress ) {
-			$links[] = $this->getContribsLink( $skin );
+			$links[] = $this->getContribsLink();
 		}
-		$links[] = $this->getUnblockLink( $skin );
-		$links[] = $this->getVandListLink( $skin );
+		$links[] = $this->getUnblockLink();
+		$links[] = $this->getVandListLink();
 		$links[] = Linker::userLink( 'MediaWiki:Ipbreason-dropdown', wfMessage( 'ipb-edit-dropdown' )->escaped() );
 		return '<p class="mw-ipb-conveniencelinks">' . implode( ' | ', $links ) . '</p>';
 	}
 
-	private function getContribsLink( $skin ) {
+	private function getContribsLink() {
 		$contribsPage = SpecialPage::getTitleFor( 'Contributions', $this->VandAddress );
-		return Linker::link( $contribsPage, wfMessage( 'ipb-blocklist-contribs' )->params( $this->VandAddress )->escaped() );
+		return $this->linker->makeLink( $contribsPage, wfMessage( 'ipb-blocklist-contribs' )->params( $this->VandAddress ) );
 	}
 
-	private function getUnblockLink( $skin ) {
+	private function getUnblockLink() {
 		$list = SpecialPage::getTitleFor( 'VandalBin' );
 		if ( $this->VandAddress ) {
 			$addr = htmlspecialchars( strtr( $this->VandAddress, '_', ' ' ) );
-			return Linker::link(
+			return $this->linker->makeLink(
 				$list, wfMessage( 'parole-addr' )->rawParams( $addr )->escaped(),
 				[], [ 'action' => 'parole', 'wpVandAddress' => $this->VandAddress ]
 			);
 		} else {
-			return Linker::link( $list, wfMessage( 'parole-any' )->escaped(), [], [ 'action' => 'parole' ] );
+			return $this->linker->makeLink( $list, wfMessage( 'parole-any' ), [], [ 'action' => 'parole' ] );
 		}
 	}
 
-	private function getVandListLink( $skin ) {
+	private function getVandListLink() {
 		$list = SpecialPage::getTitleFor( 'VandalBin' );
 		if ( $this->VandAddress ) {
 			$addr = htmlspecialchars( strtr( $this->VandAddress, '_', ' ' ) );
-			return Linker::link(
-				$list, wfMessage( 'vandalbin-addr' )->rawParams( $addr )->escaped(),
+			return $this->linker->makeLink(
+				$list, wfMessage( 'vandalbin-addr' )->rawParams( $addr ),
 				[], [ 'wpVandAddress' => $this->VandAddress ]
 			);
 		} else {
-			return Linker::link( $list, wfMessage( 'vandalbin-any' )->escaped() );
+			return $this->linker->makeLink( $list, wfMessage( 'vandalbin-any' ) );
 		}
 	}
 
@@ -239,12 +242,11 @@ class VandalForm {
 		$dbr = wfGetDB( DB_REPLICA );
 		if ( $userId != 0 ) {
 			$cond = [ 'vand_user' => $userId ];
-		} elseif ( $this->VandAddress ) {
+		} else {
 			$cond = [ 'vand_address' => $this->VandAddress ];
 		}
-		$res = $dbr->select( 'vandals', 'vand_id, vand_address, vand_user', $cond, 'VandalForm::doVandal' );
+		$res = $dbr->select( 'vandals', 'vand_id, vand_address, vand_user', $cond, __METHOD__ );
 		$found = ( $res->numRows() != 0 );
-		$res->free();
 		if ( $found ) {
 			return [ 'vandalalready' ];
 		}

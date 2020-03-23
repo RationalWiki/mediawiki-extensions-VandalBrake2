@@ -34,7 +34,6 @@ class ParoleForm {
 		}
 
 		$titleObject = SpecialPage::getTitleFor( 'VandalBin' );
-		global $wgStylePath, $wgStyleVersion;
 		$wgOut->addHTML(
 			Xml::openElement( 'form', [ 'method' => 'post', 'action' => $titleObject->getLocalURL( "action=submit" ), 'id' => 'parole' ] ) .
 			Xml::openElement( 'fieldset' ) .
@@ -101,8 +100,8 @@ class ParoleForm {
 	}
 
 	function doParole() {
+		$userId = 0;
 		if ( $this->VandAddress ) {
-			$userId = 0;
 			$this->VandAddress = IP::sanitizeIP( $this->VandAddress );
 
 			$rxIP4 = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
@@ -130,7 +129,7 @@ class ParoleForm {
 		} else {
 			$cond = [ 'vand_id' => $this->VandId ];
 		}
-		$res = $dbr->select( 'vandals', 'vand_id, vand_address, vand_user', $cond, 'VandalForm::doVandal' );
+		$res = $dbr->select( 'vandals', 'vand_id, vand_address, vand_user', $cond, __METHOD__ );
 		$found = ( $res->numRows() != 0 );
 		$res->free();
 		if ( !$found ) {

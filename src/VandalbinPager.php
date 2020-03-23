@@ -4,6 +4,7 @@ namespace MediaWiki\Extension\VandalBrake;
 
 use LinkBatch;
 use Linker;
+use MediaWiki\MediaWikiServices;
 use ReverseChronologicalPager;
 use SpecialPage;
 use User;
@@ -64,7 +65,8 @@ class VandalbinPager extends ReverseChronologicalPager {
 		$formattedTime = $wgLang->timeanddate( $row->vand_timestamp, true );
 		$line = wfMessage( 'vandalbinmsg' )->rawParams( $formattedTime, $vandaler, $target )->escaped();
 
-		$parolelink = Linker::link( SpecialPage::getTitleFor( 'vandalbin' ), wfMessage( 'parolelink' )->escaped(), [], $action, 'known' );
+		$lr = MediaWikiServices::getInstance()->getLinkRenderer();
+		$parolelink = $lr->makeKnownLink( SpecialPage::getTitleFor( 'vandalbin' ), wfMessage( 'parolelink' ), [], $action );
 
 		$flags = [];
 		if ( $row->vand_anon_only ) {
