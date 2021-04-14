@@ -377,18 +377,16 @@ class VandalBrake {
 		$dbr = wfGetDB( DB_REPLICA );
 		$revisionStore = MediaWikiServices::getInstance()->getRevisionStore();
 		$revQuery = $revisionStore->getQueryInfo();
-		$actorQuery = ActorMigration::newMigration()
-			->getWhere( $dbr, 'rev_user', $user );
 		$row = $dbr->selectRow(
-			array_merge( $revQuery['tables'], $actorQuery['tables'] ),
+			$revQuery['tables'],
 			[ 'rev_timestamp' ],
-			array_merge( $revQuery['conds'], $actorQuery['conds'] ),
+			[ $revQuery['fields']['rev_user_text'] => $user->getName() ],
 			__METHOD__,
 			[
 				'LIMIT' => 1,
 				'ORDER BY' => 'rev_timestamp DESC'
 			],
-			array_merge( $revQuery['join_conds'], $actorQuery['join_conds'] )
+			$revQuery['joins']
 		);
 		if ( $row ) {
 			return $row->rev_timestamp;
