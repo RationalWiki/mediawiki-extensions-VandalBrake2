@@ -44,5 +44,6 @@
 	"right-vandalbin": "Put users in the vandal bin",
 	"vandallog-showlog": "This user has been binned previously.\nThe vandal log is provided below for reference:",
 	"vandal-otherreason": "Other/additional reason:",
-	"vandal-reasonotherlist": "Other reason"
+	"vandal-reasonotherlist": "Other reason",
+	"action-vandalbin": "edit the vandal bin"
 }
