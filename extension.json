@@ -32,7 +32,7 @@
 		"VandalBrake": "MediaWiki\\Extension\\VandalBrake\\SpecialVandal",
 		"VandalBin": "MediaWiki\\Extension\\VandalBrake\\SpecialVandalbin"
 	},
-	"ExtensionMessagesDirs": {
+	"MessagesDirs": {
 		"VandalBrake": "i18n"
 	},
 	"AutoloadNamespaces": {
