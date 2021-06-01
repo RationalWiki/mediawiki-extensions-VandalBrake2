@@ -60,7 +60,8 @@ class VandalbinPager extends ReverseChronologicalPager {
 				$name = $row->vand_address;
 			}
 			$action['wpVandAddress'] = $name;//$row->vand_address;
-			$target = Linker::userLink( $row->vand_user, /*$row->vand_address*/ $name ) . Linker::userToolLinks( $row->vand_user, /*$row->vand_address*/ $name, false, Linker::TOOL_LINKS_NOBLOCK );
+			$target = Linker::userLink( $row->vand_user, /*$row->vand_address*/ $name ) .
+				Linker::userToolLinks( $row->vand_user, /*$row->vand_address*/ $name, false, Linker::TOOL_LINKS_NOBLOCK );
 		}
 		$formattedTime = $wgLang->timeanddate( $row->vand_timestamp, true );
 		$line = wfMessage( 'vandalbinmsg' )->rawParams( $formattedTime, $vandaler, $target )->escaped();
@@ -68,19 +69,8 @@ class VandalbinPager extends ReverseChronologicalPager {
 		$lr = MediaWikiServices::getInstance()->getLinkRenderer();
 		$parolelink = $lr->makeKnownLink( SpecialPage::getTitleFor( 'vandalbin' ), wfMessage( 'parolelink' ), [], $action );
 
-		$flags = [];
-		if ( $row->vand_anon_only ) {
-			$flags[] = wfMessage( 'block-log-flags-anononly' )->text();
-		}
-		if ( $row->vand_account ) {
-			$flags[] = wfMessage( 'block-log-flags-nocreate' )->text();
-		}
-		if ( !$row->vand_autoblock && $row->vand_user ) {
-			$flags[] = wfMessage( 'block-log-flags-noautoblock' )->text();
-		}
-		$flagsstr = implode( ', ', $flags );
 		$comment = Linker::commentBlock( $reason );
-		return "<li>$line ($flagsstr) $comment ($parolelink)</li>\n";
+		return "<li>$line $comment ($parolelink)</li>\n";
 	}
 
 	function getQueryInfo() {

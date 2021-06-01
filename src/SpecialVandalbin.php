@@ -27,7 +27,7 @@ class SpecialVandalbin extends SpecialPage {
 			Html::hidden( 'title', $wgTitle->getPrefixedDbKey() ) .
 			Xml::openElement( 'fieldset' ) .
 			Xml::element( 'legend', null, wfMessage( 'vandalbin-legend' )->text() ) .
-			Xml::inputLabel( wfMessage( 'ipaddressorusername' )->text(), 'wpVandAddress', 'wpVandAddress', /* size */ false, $this->VandAddress ) .
+			Xml::inputLabel( wfMessage( 'vandal-target-label' )->text(), 'wpVandAddress', 'wpVandAddress', /* size */ false, $this->VandAddress ) .
 			'&nbsp;' .
 			Xml::submitButton( wfMessage( 'ipblocklist-submit' )->text() ) . '<br />' .
 			Xml::closeElement( 'fieldset' )

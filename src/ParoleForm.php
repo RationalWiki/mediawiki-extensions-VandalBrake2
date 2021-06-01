@@ -23,7 +23,7 @@ class ParoleForm {
 		global $wgOut, $wgUser;
 		$wgOut->setPagetitle( wfMessage( 'paroletitle' )->escaped() );
 		$wgOut->addWikiMsg( 'paroletext' );
-		$mIpaddress = Xml::label( wfMessage( 'ipaddressorusername' )->text(), 'mw-bi-target' );
+		$mTargetLabel = Xml::label( wfMessage( 'vandal-target-label' )->text(), 'mw-bi-target' );
 		$mReason = Xml::label( wfMessage( 'ipbreason' )->text(), 'vand-reason' );
 
 		if ( $err ) {
@@ -41,7 +41,7 @@ class ParoleForm {
 			Xml::openElement( 'table', [ 'border' => '0', 'id' => 'mw-parole-table' ] ) .
 			"<tr>
 		<td class='mw-label'>
-		  {$mIpaddress}
+		  {$mTargetLabel}
 		</td>
 		<td class='mw-input'>"
 		);
@@ -102,36 +102,21 @@ class ParoleForm {
 	function doParole() {
 		$userId = 0;
 		if ( $this->VandAddress ) {
-			$this->VandAddress = IP::sanitizeIP( $this->VandAddress );
-
-			$rxIP4 = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}';
-			$rxIP6 = '\w{1,4}:\w{1,4}:\w{1,4}:\w{1,4}:\w{1,4}:\w{1,4}:\w{1,4}:\w{1,4}';
-			$rxIP = "($rxIP4|$rxIP6)";
-			if ( !preg_match( "/^$rxIP$/", $this->VandAddress ) ) {
-				// username
-				$user = User::newFromName( $this->VandAddress );
-				if ( $user !== null && $user->getId() ) {
-					$userId = $user->getId();
-					$this->VandAddress = $user->getName();
-				} else {
-					return [ 'nosuchusershort', htmlspecialchars( $user ? $user->getName() : $this->VandAddress ) ];
-				}
+			$user = User::newFromName( $this->VandAddress );
+			if ( $user !== null && $user->getId() ) {
+				$userId = $user->getId();
+				$this->VandAddress = $user->getName();
+			} else {
+				return [ 'nosuchusershort', htmlspecialchars( $user ? $user->getName() : $this->VandAddress ) ];
 			}
 		}
 
 		$reasonstr = $this->Reason;
 
 		$dbr = wfGetDB( DB_REPLICA );
-		if ( $userId != 0 ) {
-			$cond = [ 'vand_user' => $userId ];
-		} elseif ( $this->VandAddress ) {
-			$cond = [ 'vand_address' => $this->VandAddress ];
-		} else {
-			$cond = [ 'vand_id' => $this->VandId ];
-		}
-		$res = $dbr->select( 'vandals', 'vand_id, vand_address, vand_user', $cond, __METHOD__ );
+		$res = $dbr->select( 'vandals', [ 'vand_id', 'vand_address', 'vand_user' ],
+			[ 'vand_user' => $userId ], __METHOD__ );
 		$found = ( $res->numRows() != 0 );
-		$res->free();
 		if ( !$found ) {
 			return [ 'vandalnot' ];
 		}

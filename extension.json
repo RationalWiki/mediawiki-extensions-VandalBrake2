@@ -41,7 +41,6 @@
 	"Hooks": {
 		"LoadExtensionSchemaUpdates": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onLoadExtensionSchemaUpdates",
 		"EditFilterMergedContent": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onEditFilterMergedContent",
-		"AbortNewAccount": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onAccountCreation",
 		"ContributionsToolLinks": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onContributionsToolLinks",
 		"UserGetRights": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onUserGetRights",
 		"RenameUserSQL": "MediaWiki\\Extension\\VandalBrake\\VandalBrake::onRenameUserSQL",
