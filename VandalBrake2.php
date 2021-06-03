@@ -14,7 +14,7 @@ $wgVandalBrakeConfigUserLimit = 15;
 $wgGroupPermissions['sysop']['vandalbin'] = true;
 
 // which rights to remove from a vandal:
-$wgVandalBrakeConfigRemoveRights = [ 'move', 'skipcaptcha', 'rollback' ];
+$wgVandalBrakeConfigRemoveRights = [ 'move', 'skipcaptcha', 'rollback', 'vandalbin' ];
 // which rights to limit by the edit limit (i.e. they will be available only if more than $wgVandalBrakeConfigLimit seconds have passed since the user's last action):
 $wgVandalBrakeConfigLimitRights = [];
 
