@@ -227,13 +227,13 @@ class VandalBrake {
 		$row = $dbr->selectRow(
 			array_merge( $arQuery['tables'], $actorQuery['tables'] ),
 			[ 'ar_timestamp' ],
-			array_merge( $arQuery['conds'], $actorQuery['conds'] ),
+			$actorQuery['conds'],
 			__METHOD__,
 			[
 				'LIMIT' => 1,
 				'ORDER BY' => 'ar_timestamp DESC'
 			],
-			array_merge( $arQuery['join_conds'], $actorQuery['join_conds'] )
+			array_merge( $arQuery['joins'], $actorQuery['joins'] )
 		);
 		if ( $row ) {
 			return $row->ar_timestamp;
